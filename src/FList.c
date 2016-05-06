@@ -390,7 +390,7 @@ BOOL FList_quickSort(FList* me, FListCompare compare)
 	U32 count = me->d->count;
 
 	//…Í«Îœﬂ–‘ª∫≥Â«¯
-	FListNode **sorted = (FListNode**)F_MALLOC(count * sizeof(void*));
+	FListNode **sorted = (FListNode**)F_MALLOC(count * sizeof(FListNode*));
 	if (!sorted) {
 		LOG(LOG_ERROR, "FList(%p) sort need more memory\n", me);
 		return FALSE;
