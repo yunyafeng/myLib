@@ -107,7 +107,7 @@ U32 FStringList_count(FStringList *me)
 	return me->d->count;
 }
 
-char* FStringList_indexOf(FStringList *me, U32 index)
+char* FStringList_atIndex(FStringList *me, U32 index)
 {
 	F_ASSERT(me && me->d, "You must call the [FStringList_ctor] before use it");
 	

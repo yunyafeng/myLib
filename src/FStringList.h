@@ -33,7 +33,7 @@ BOOL  FStringList_reserved	(FStringList* me, U32 count,  U32 bytes);
 //返回StringList 中字符串的个数
 U32   FStringList_count		(FStringList *me);
 //获取指定索引上的字符串(char*)
-char* FStringList_indexOf	(FStringList *me, U32 index);
+char* FStringList_atIndex	(FStringList *me, U32 index);
 //输出StringList到标准流
 void  FStringList_output	(FStringList* me, FILE *stream);
 //在StringList的尾部追加一个字符串
