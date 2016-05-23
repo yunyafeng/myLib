@@ -23,7 +23,7 @@ typedef struct f_list_iterator
 
 typedef int (*FListCompare)(const void*, const void*);
 
-#define container_of(ptr, type, member) \
+#define f_container_of(ptr, type, member) \
 ({\
 	const typeof(((type *)0)->member) *__mptr = (ptr);\
 	(type *)((char *)__mptr - ((size_t)&(type *)0)->member));\

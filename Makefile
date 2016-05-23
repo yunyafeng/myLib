@@ -1,4 +1,4 @@
-#CROSS	   	:= arm-none-linux-gnueabi-
+CROSS	   	:= arm-none-linux-gnueabi-
 CC			:= $(CROSS)g++
 CXX			:= $(CROSS)g++
 AR			:= $(CROSS)ar
@@ -16,10 +16,11 @@ TEST		:= test -d
 Prefix		:= ..
 BINDIR 		:= bin
 OBJDIR 		:= obj
-LIBDIR		:= lib
-INCLUDE		:= include
+OUTDIR		:= flib
+LIBDIR		:= $(OUTDIR)/lib
+INCLUDE		:= $(OUTDIR)/include
 
-DEST		:= flib_test
+DEST		:= flib
 ELF        	:= $(BINDIR)/$(DEST)
 DIS        	:= $(BINDIR)/$(DEST).dis
 MAP			:= $(BINDIR)/$(DEST).map.txt
@@ -37,20 +38,21 @@ OBJS		+= $(patsubst $(SRCDIR)/%.cpp, $(OBJDIR)/%.o, $(CXX_SRC))
 
 INC 		:= -I$(INCDIR)
 WARNINGS 	:= -Wall
-CFLAGS 		:= $(WARNINGS) $(INC) -m32
+CFLAGS 		:= $(WARNINGS) $(INC) -O2
 
 ifeq ($(DEBUG), 1)
 CFLAGS		+= -g
 endif
 
-all: check_directory $(ELF)
-lib: check_directory $(DYNAMICLIB) $(STATICLIB) headers
+all: check_directory lib
+lib: $(DYNAMICLIB) $(STATICLIB) headers
 
 check_directory:
 	@$(TEST) $(BINDIR) || $(MKDIR) $(BINDIR)
 	@$(TEST) $(OBJDIR) || $(MKDIR) $(OBJDIR)
 	@$(TEST) $(LIBDIR) || $(MKDIR) $(LIBDIR)
 	@$(TEST) $(INCLUDE) || $(MKDIR) $(INCLUDE)
+
 
 $(DYNAMICLIB):$(OBJS)
 	@$(PRINT) Creating $@ ....
@@ -65,10 +67,8 @@ headers:
 	@$(COPY) $(INCDIR)/*.h $(INCLUDE)
 
 install:
-	@$(PRINT) Installing Headers ....	
-	@$(INSTALL) $(INCLUDE) $(Prefix)
-	@$(PRINT) Installing Library ....
-	@$(INSTALL) $(LIBDIR) $(Prefix)
+	@$(PRINT) Installing ....	
+	@$(INSTALL) $(OUTDIR) $(Prefix)
 
 $(ELF):$(OBJS)
 	@echo Linking $@ from $^ ....

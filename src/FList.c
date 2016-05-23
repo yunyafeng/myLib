@@ -132,7 +132,7 @@ static int FList_nodeCompare(const void* node1, const void*node2)
  */
 void FList_ctor(FList* me)
 {
-	me->d = (FListPrivate*)F_MALLOC(sizeof(FListPrivate));
+	me->d = (FListPrivate*)malloc(sizeof(FListPrivate));
 	FListPrivate_ctor(me->d);
 }
 
@@ -142,7 +142,7 @@ void FList_dtor(FList* me)
 		FList_takeAtIndex(me, 0);
 	}
 	FListPrivate_dtor(me->d);
-	F_FREE(me->d);
+	free(me->d);
 	me->d = NULL;
 }
 
@@ -166,11 +166,11 @@ BOOL FList_insertAtIndex(FList* me, U32 index, const void* data)
 	F_ASSERT(me && me->d, "You must call the [FList_ctor] before use it");
 	
 	if (index > me->d->count) {
-		LOG(LOG_ERROR, "FList(%p) insert out of range\n", me);
+		F_LOG(F_LOG_ERROR, "FList(%p) insert out of range\n", me);
 		return FALSE;
 	}
 
-	FListNode *node = (FListNode*)F_MALLOC(sizeof(FListNode));
+	FListNode *node = (FListNode*)malloc(sizeof(FListNode));
 	if (!node) {
 		return FALSE;
 	}
@@ -196,7 +196,7 @@ BOOL FList_insertAtIndex(FList* me, U32 index, const void* data)
 			return TRUE;
 		}
 		else {
-			F_FREE(node);
+			free(node);
 			return FALSE;
 		}
 	}
@@ -215,11 +215,11 @@ void* FList_takeAtIndex(FList* me, U32 index)
 	if (node) {
 		void* result = node->data;
 		FList_removeNode(me, node);
-		F_FREE(node);
+		free(node);
 		return result;
 	}
 	else {
-		LOG(LOG_ERROR, "FList(%p) take out of range\n", me);
+		F_LOG(F_LOG_ERROR, "FList(%p) take out of range\n", me);
 	}
 
 	return NULL;
@@ -240,7 +240,7 @@ BOOL FList_insertBeforeIter(FList* me, FListIterator* iter, const void* data)
 		return FALSE;
 	}
 	
-	FListNode *node = (FListNode*)F_MALLOC(sizeof(FListNode));
+	FListNode *node = (FListNode*)malloc(sizeof(FListNode));
 	if (!node) {
 		return FALSE;
 	}
@@ -249,7 +249,7 @@ BOOL FList_insertBeforeIter(FList* me, FListIterator* iter, const void* data)
 		return TRUE;
 	}
 	else {
-		F_FREE(node);
+		free(node);
 		return FALSE;
 	}
 }
@@ -264,7 +264,7 @@ void* FList_takeAtIter(FList* me, FListIterator* iter)
 		void* result = node->data;
 		FListIterator_inc(iter);
 		FList_removeNode(me, node);
-		F_FREE(node);
+		free(node);
 		return result;
 	}
 	return NULL;
@@ -297,14 +297,14 @@ void* FList_popBack(FList* me)
 	F_ASSERT(me && me->d, "You must call the [FList_ctor] before use it");
 
 	if (0 == me->d->count) {
-		LOG(LOG_ERROR, "FList(%p) is empty\n", me);
+		F_LOG(F_LOG_ERROR, "FList(%p) is empty\n", me);
 		return NULL;
 	}
 
 	FListNode *node = me->d->tail;
 	void* result = node->data;
 	FList_removeNode(me, node);
-	F_FREE(node);
+	free(node);
 	
 	return result;
 }
@@ -356,7 +356,7 @@ void FList_output(FList* me, FILE* stream)
 		fprintf(stream, "]\n");
 	}
 	else {
-		LOG(LOG_ERROR, "FList(%p) is invalid\n", me);
+		F_LOG(F_LOG_ERROR, "FList(%p) is invalid\n", me);
 	}
 }
 
@@ -370,7 +370,7 @@ void FList_debug(FList* me)
 		fprintf(stdout, "]\n");
 	}
 	else {
-		LOG(LOG_ERROR, "FList(%p) is invalid\n", me);
+		F_LOG(F_LOG_ERROR, "FList(%p) is invalid\n", me);
 	}
 }
 
@@ -379,7 +379,7 @@ BOOL FList_quickSort(FList* me, FListCompare compare)
 	F_ASSERT(me && me->d, "You must call the [FList_ctor] before use it");
 
 	if (0 == me->d->count) { 
-		LOG(LOG_ERROR, "FList(%p) is empty\n", me);
+		F_LOG(F_LOG_ERROR, "FList(%p) is empty\n", me);
 		return FALSE;
 	}
 
@@ -390,9 +390,9 @@ BOOL FList_quickSort(FList* me, FListCompare compare)
 	U32 count = me->d->count;
 
 	//ÉêÇëÏßÐÔ»º³åÇø
-	FListNode **sorted = (FListNode**)F_MALLOC(count * sizeof(FListNode*));
+	FListNode **sorted = (FListNode**)malloc(count * sizeof(FListNode*));
 	if (!sorted) {
-		LOG(LOG_ERROR, "FList(%p) sort need more memory\n", me);
+		F_LOG(F_LOG_ERROR, "FList(%p) sort need more memory\n", me);
 		return FALSE;
 	}
 
@@ -419,7 +419,7 @@ BOOL FList_quickSort(FList* me, FListCompare compare)
 	me->d->head->prev = me->d->tail;
 	me->d->tail->next = me->d->head;
 
-	F_FREE(sorted);
+	free(sorted);
 	return TRUE;
 }
 
