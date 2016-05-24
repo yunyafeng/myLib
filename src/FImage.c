@@ -30,9 +30,22 @@ typedef struct f_image_private
 } FImgPrivate;
 
 
-//返回24位图像的(x, y)的像素数据
+/*
+ *
+ * 浮点运算采用 20.12的方式优化
+ * 要在充分了解需求表示的数值的范围以及所有可能特殊情况下使用
+ * 在本场景下小数位最多为15位 即 17.15
+ */
+#define  DecBits			(15)			//小数位占用的位数
+#define  IntMask			(0xFFFF8000)	//整数部分掩码
+#define  DecMask			(0x00007FFF)	//小数部分掩码
+#define  One				(1 << DecBits)	//定点之后的1
+
+
+//返回图像的(x, y)的像素数据
 #define Pixel(colorType, img, x, y) \
 		((colorType*)((img)->d->data + (img)->d->lineSize * (y)) + (x))
+
 
 
 //临近插值法缩放图像
@@ -169,18 +182,20 @@ void FImg_resize(FImg* me, F32 wScale, F32 hScale, U32 zoomHint)
 	FImg newImg;
 	FImg_ctor(&newImg, me->d->depth, w, h);
 
-	switch (zoomHint) 
-	{
-	case FIMG_SPEED_PRIORITY:	//速度优先，使用临近插值法
-		FImg_ZoomNearestNeighbour(&newImg, me);
-		break;
-	case FIMG_QUALITY_PRIORITY:	//质量优先，双三次插值算法
-		FImg_ZoomBicubic(&newImg, me);
-		break;
-	case FIMG_BALANCED:			//均衡，双线性插值
-	default:
-		FImg_ZoomBilinear(&newImg, me);
-		break;
+	if (FImg_isValid(&newImg)) {
+		switch (zoomHint) 
+		{
+		case FIMG_SPEED_PRIORITY:	//速度优先，使用临近插值法
+			FImg_ZoomNearestNeighbour(&newImg, me);
+			break;
+		case FIMG_QUALITY_PRIORITY:	//质量优先，双三次插值算法
+			FImg_ZoomBicubic(&newImg, me);
+			break;
+		case FIMG_BALANCED:			//均衡，双线性插值
+		default:
+			FImg_ZoomBilinear(&newImg, me);
+			break;
+		}
 	}
 
 	FImg_dtor(me);
@@ -198,13 +213,13 @@ static void FImg_ZoomNearestNeighbour16(FImg *pDst, FImg *pSrc)
 	U32 x, y;
 	U32 sx, sy; 
 	
-	U32 xRatio = (pSrc->d->width << 16) / pDst->d->width + 1;
-	U32 yRatio = (pSrc->d->height << 16) / pDst->d->height + 1;
+	U32 xRatio = (pSrc->d->width << DecBits) / pDst->d->width;
+	U32 yRatio = (pSrc->d->height << DecBits) / pDst->d->height;
 
 	for (y = 0; y < pDst->d->height; ++y) {	
-		sy = (y * yRatio) >> 16;	
+		sy = (y * yRatio) >> DecBits;	
 		for (x = 0; x < pDst->d->width; ++x) {			
-			sx = (x * xRatio) >> 16;
+			sx = (x * xRatio) >> DecBits;
 			(*Pixel(TRGB16, pDst, x, y)) = (*Pixel(TRGB16, pSrc, sx, sy));
 		}
 	}
@@ -215,13 +230,13 @@ static void FImg_ZoomNearestNeighbour24(FImg *pDst, FImg *pSrc)
 	U32 x, y;
 	U32 sx, sy; 
 	
-	U32 xRatio = (pSrc->d->width << 16) / pDst->d->width + 1;
-	U32 yRatio = (pSrc->d->height << 16) / pDst->d->height + 1;
+	U32 xRatio = (pSrc->d->width << DecBits) / pDst->d->width;
+	U32 yRatio = (pSrc->d->height << DecBits) / pDst->d->height;
 
 	for (y = 0; y < pDst->d->height; ++y) {	
-		sy = (y * yRatio) >> 16;	
+		sy = (y * yRatio) >> DecBits;	
 		for (x = 0; x < pDst->d->width; ++x) {			
-			sx = (x * xRatio) >> 16;
+			sx = (x * xRatio) >> DecBits;
 			(*Pixel(TRGB24, pDst, x, y)) = (*Pixel(TRGB24, pSrc, sx, sy));
 		}
 	}
@@ -232,13 +247,13 @@ static void FImg_ZoomNearestNeighbour32(FImg *pDst, FImg *pSrc)
 	U32 x, y;
 	U32 sx, sy; 
 	
-	U32 xRatio = (pSrc->d->width << 16) / pDst->d->width + 1;
-	U32 yRatio = (pSrc->d->height << 16) / pDst->d->height + 1;
+	U32 xRatio = (pSrc->d->width << DecBits) / pDst->d->width;
+	U32 yRatio = (pSrc->d->height << DecBits) / pDst->d->height;
 
 	for (y = 0; y < pDst->d->height; ++y) {	
-		sy = (y * yRatio) >> 16;	
+		sy = (y * yRatio) >> DecBits;	
 		for (x = 0; x < pDst->d->width; ++x) {			
-			sx = (x * xRatio) >> 16;
+			sx = (x * xRatio) >> DecBits;
 			(*Pixel(TRGB32, pDst, x, y)) = (*Pixel(TRGB32, pSrc, sx, sy));
 		}
 	}
@@ -276,21 +291,20 @@ static void FImg_ZoomBilinear16(FImg *pDst, FImg *pSrc)
 	U32 x1, y1, x2, y2;
 	U32 u, v;
 	
-	U32 xRatio = (pSrc->d->width << 16) / pDst->d->width + 1;
-	U32 yRatio = (pSrc->d->height << 16) / pDst->d->height + 1;
-	U32 one = 1 << 16;
+	U32 xRatio = (pSrc->d->width << DecBits) / pDst->d->width;
+	U32 yRatio = (pSrc->d->height << DecBits) / pDst->d->height;
 
 	for (y = 0; y < pDst->d->height; ++y) {
 		y1 = (y * yRatio);
-		u = y1 & 0x0000FFFF; 		//小数部分
-		y1 &= 0xFFFF0000;			//整数部分
-		y1 >>= 16;					//坐标值
+		u = y1 & DecMask; 				//小数部分
+		y1 &= IntMask;					//整数部分
+		y1 >>= DecBits;					//坐标值
 		y2 = (y == (pDst->d->height - 1)) ? y1 : y1 + 1;
 		for (x = 0; x < pDst->d->width; ++x) {
 			x1 = (x * xRatio);
-			v = x1 & 0x0000FFFF; 	//小数部分
-			x1 &= 0xFFFF0000;		//整数部分
-			x1 >>= 16;				//坐标值
+			v = x1 & DecMask; 			//小数部分
+			x1 &= IntMask;				//整数部分
+			x1 >>= DecBits;				//坐标值
 			x2 = (x == (pDst->d->width- 1)) ? x1 : x1 + 1;
 	
 			TRGB16 p1 = *(Pixel(TRGB16, pSrc, x1, y1));
@@ -298,21 +312,22 @@ static void FImg_ZoomBilinear16(FImg *pDst, FImg *pSrc)
 			TRGB16 p3 = *(Pixel(TRGB16, pSrc, x2, y1));
 			TRGB16 p4 = *(Pixel(TRGB16, pSrc, x2, y2));
 			
-			U32 a = (one - u) * (one - v) >> 16;
-			U32 b = (one - v) * u >> 16;
-			U32 c = (one - u) * v >> 16;
-			U32 d = v * u >> 16;	
+			U32 a = (One - u) * (One - v) >> DecBits;
+			U32 b = (One - v) * u >> DecBits;
+			U32 c = (One - u) * v >> DecBits;
+			U32 d = v * u >> DecBits;	
 
 			TRGB16 target;
 
-			target.R = (a * p1.R + b * p2.R + c * p3.R + d * p4.R) >> 16;
-			target.G = (a * p1.G + b * p2.G + c * p3.G + d * p4.G) >> 16;
-			target.B = (a * p1.B + b * p2.B + c * p3.B + d * p4.B) >> 16;
+			target.R = (a * p1.R + b * p2.R + c * p3.R + d * p4.R) >> DecBits;
+			target.G = (a * p1.G + b * p2.G + c * p3.G + d * p4.G) >> DecBits;
+			target.B = (a * p1.B + b * p2.B + c * p3.B + d * p4.B) >> DecBits;
 
 			*Pixel(TRGB16, pDst, x, y) = target;
 		}
 	}
 }
+
 
 static void FImg_ZoomBilinear24(FImg *pDst, FImg *pSrc)
 {
@@ -320,21 +335,20 @@ static void FImg_ZoomBilinear24(FImg *pDst, FImg *pSrc)
 	U32 x1, y1, x2, y2;
 	U32 u, v;
 	
-	U32 xRatio = (pSrc->d->width << 16) / pDst->d->width + 1;
-	U32 yRatio = (pSrc->d->height << 16) / pDst->d->height + 1;
-	U32 one = 1 << 16;
+	U32 xRatio = (pSrc->d->width << DecBits) / pDst->d->width ;
+	U32 yRatio = (pSrc->d->height << DecBits) / pDst->d->height ;
 
 	for (y = 0; y < pDst->d->height; ++y) {
 		y1 = (y * yRatio);
-		u = y1 & 0x0000FFFF; 		//小数部分
-		y1 &= 0xFFFF0000;			//整数部分
-		y1 >>= 16;					//坐标值
+		u = y1 & DecMask; 		//小数部分
+		y1 &= IntMask;			//整数部分
+		y1 >>= DecBits;					//坐标值
 		y2 = (y == (pDst->d->height - 1)) ? y1 : y1 + 1;
 		for (x = 0; x < pDst->d->width; ++x) {
 			x1 = (x * xRatio);
-			v = x1 & 0x0000FFFF; 	//小数部分
-			x1 &= 0xFFFF0000;		//整数部分
-			x1 >>= 16;				//坐标值
+			v = x1 & DecMask; 	//小数部分
+			x1 &= IntMask;		//整数部分
+			x1 >>= DecBits;				//坐标值
 			x2 = (x == (pDst->d->width- 1)) ? x1 : x1 + 1;
 	
 			TRGB24 p1 = *(Pixel(TRGB24, pSrc, x1, y1));
@@ -342,16 +356,16 @@ static void FImg_ZoomBilinear24(FImg *pDst, FImg *pSrc)
 			TRGB24 p3 = *(Pixel(TRGB24, pSrc, x2, y1));
 			TRGB24 p4 = *(Pixel(TRGB24, pSrc, x2, y2));
 			
-			U32 a = (one - u) * (one - v) >> 16;
-			U32 b = (one - v) * u >> 16;
-			U32 c = (one - u) * v >> 16;
-			U32 d = v * u >> 16;	
+			U32 a = (One - u) * (One - v) >> DecBits;
+			U32 b = (One - v) * u >> DecBits;
+			U32 c = (One - u) * v >> DecBits;
+			U32 d = v * u >> DecBits;	
 
 			TRGB24 target;
 
-			target.R = (a * p1.R + b * p2.R + c * p3.R + d * p4.R) >> 16;
-			target.G = (a * p1.G + b * p2.G + c * p3.G + d * p4.G) >> 16;
-			target.B = (a * p1.B + b * p2.B + c * p3.B + d * p4.B) >> 16;
+			target.R = (a * p1.R + b * p2.R + c * p3.R + d * p4.R) >> DecBits;
+			target.G = (a * p1.G + b * p2.G + c * p3.G + d * p4.G) >> DecBits;
+			target.B = (a * p1.B + b * p2.B + c * p3.B + d * p4.B) >> DecBits;
 
 			*Pixel(TRGB24, pDst, x, y) = target;
 		}
@@ -364,21 +378,20 @@ static void FImg_ZoomBilinear32(FImg *pDst, FImg *pSrc)
 	U32 x1, y1, x2, y2;
 	U32 u, v;
 	
-	U32 xRatio = (pSrc->d->width << 16) / pDst->d->width + 1;
-	U32 yRatio = (pSrc->d->height << 16) / pDst->d->height + 1;
-	U32 one = 1 << 16;
+	U32 xRatio = (pSrc->d->width << DecBits) / pDst->d->width;
+	U32 yRatio = (pSrc->d->height << DecBits) / pDst->d->height;
 
 	for (y = 0; y < pDst->d->height; ++y) {
 		y1 = (y * yRatio);
-		u = y1 & 0x0000FFFF; 		//小数部分
-		y1 &= 0xFFFF0000;			//整数部分
-		y1 >>= 16;					//坐标值
+		u = y1 & DecMask; 				//小数部分
+		y1 &= IntMask;					//整数部分
+		y1 >>= DecBits;					//坐标值
 		y2 = (y == (pDst->d->height - 1)) ? y1 : y1 + 1;
 		for (x = 0; x < pDst->d->width; ++x) {
 			x1 = (x * xRatio);
-			v = x1 & 0x0000FFFF; 	//小数部分
-			x1 &= 0xFFFF0000;		//整数部分
-			x1 >>= 16;				//坐标值
+			v = x1 & DecMask; 			//小数部分
+			x1 &= IntMask;				//整数部分
+			x1 >>= DecBits;				//坐标值
 			x2 = (x == (pDst->d->width- 1)) ? x1 : x1 + 1;
 	
 			TRGB32 p1 = *(Pixel(TRGB32, pSrc, x1, y1));
@@ -386,17 +399,17 @@ static void FImg_ZoomBilinear32(FImg *pDst, FImg *pSrc)
 			TRGB32 p3 = *(Pixel(TRGB32, pSrc, x2, y1));
 			TRGB32 p4 = *(Pixel(TRGB32, pSrc, x2, y2));
 			
-			U32 a = (one - u) * (one - v) >> 16;
-			U32 b = (one - v) * u >> 16;
-			U32 c = (one - u) * v >> 16;
-			U32 d = v * u >> 16;	
+			U32 a = (One - u) * (One - v) >> DecBits;
+			U32 b = (One - v) * u >> DecBits;
+			U32 c = (One - u) * v >> DecBits;
+			U32 d = v * u >> DecBits;	
 
 			TRGB32 target;
 
-			target.R = (a * p1.R + b * p2.R + c * p3.R + d * p4.R) >> 16;
-			target.G = (a * p1.G + b * p2.G + c * p3.G + d * p4.G) >> 16;
-			target.B = (a * p1.B + b * p2.B + c * p3.B + d * p4.B) >> 16;
-			target.A = (a * p1.A + b * p2.A + c * p3.A + d * p4.A) >> 16;
+			target.R = (a * p1.R + b * p2.R + c * p3.R + d * p4.R) >> DecBits;
+			target.G = (a * p1.G + b * p2.G + c * p3.G + d * p4.G) >> DecBits;
+			target.B = (a * p1.B + b * p2.B + c * p3.B + d * p4.B) >> DecBits;
+			target.A = (a * p1.A + b * p2.A + c * p3.A + d * p4.A) >> DecBits;
 			
 			*Pixel(TRGB32, pDst, x, y) = target;
 		}
@@ -428,8 +441,8 @@ static void FImg_ZoomBilinear(FImg *pDst, FImg *pSrc)
 //双三次插值算法（Bicubic interpolation）
 static void FImg_ZoomBicubic(FImg *pDst, FImg *pSrc)
 {
-	U32 x, y;
-	U32 sx, sy; 
+	//U32 x, y;
+	//U32 sx, sy; 
 
 	if (pDst->d->depth != pSrc->d->depth)
 		return;

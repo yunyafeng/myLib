@@ -235,9 +235,9 @@ static void FJpegLoader_dtor(FJpegLoader* me)
 	FImgLoader_dtor(&me->super);
 }
 
-static FImgLoader *FBmpLoader_create()
+static FImgLoader *FJpegLoader_create()
 {
-	FJpegLoader *jpegLoader = (FBmpLoader*)malloc(sizeof(FBmpLoader));
+	FJpegLoader *jpegLoader = (FJpegLoader*)malloc(sizeof(FBmpLoader));
 	FJpegLoader_ctor(jpegLoader);
 	return (FImgLoader*)jpegLoader;
 }
@@ -263,9 +263,9 @@ static void FPngLoader_dtor(FPngLoader* me)
 	FImgLoader_dtor(&me->super);
 }
 
-static FImgLoader *FBmpLoader_create()
+static FImgLoader *FPngLoader_create()
 {
-	FPngLoader *pngLoader = (FBmpLoader*)malloc(sizeof(FBmpLoader));
+	FPngLoader *pngLoader = (FPngLoader*)malloc(sizeof(FBmpLoader));
 	FPngLoader_ctor(pngLoader);
 	return (FImgLoader*)pngLoader;
 }
