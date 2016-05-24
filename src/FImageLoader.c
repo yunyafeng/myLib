@@ -7,8 +7,10 @@ typedef struct f_bmp_loader {
 	FImgLoader 	super;
 } FBmpLoader;
 
+
 static void FBmpLoader_ctor(FBmpLoader* me);
-static void FBmpLoader_dtor(FBmpLoader* me);
+static void FBmpLoader_dtor(FBmpLoader* me);
+static FImgLoader *FBmpLoader_create();
 static BOOL FBmpLoader_load(FBmpLoader* me, const char* imgFile);
 
 
@@ -20,6 +22,7 @@ typedef struct f_jpeg_loader {
 
 static void FJpegLoader_ctor(FJpegLoader* me);
 static void FJpegLoader_dtor(FJpegLoader* me);
+static FImgLoader *FJpegLoader_create();
 static BOOL FJpegLoader_load(FJpegLoader* me, const char* imgFile);
 
 
@@ -31,6 +34,7 @@ typedef struct f_png_loader {
 
 static void FPngLoader_ctor(FPngLoader* me);
 static void FPngLoader_dtor(FPngLoader* me);
+static FImgLoader *FPngLoader_create();
 static BOOL FPngLoader_load(FPngLoader* me, const char* imgFile);
 
 
@@ -43,6 +47,7 @@ typedef struct f_img_loaders {
 
 static void FImgLoaders_ctor(FImgLoaders* me);
 static void FImgLoaders_dtor(FImgLoaders* me);
+static FImgLoader* FImgLoaders_create();
 static BOOL FImgLoaders_load(FImgLoaders* me, const char* imgFile);
 static BOOL FImgLoaders_registerLoader(FImgLoaders* me, FImgLoader* loader);
 
@@ -64,6 +69,25 @@ static void FImgLoader_dtor(FImgLoader* me)
 	FImg_dtor(&me->image);
 }
 
+static FImgLoader* SimpleFactory_create(const char* loaderType)
+{
+	FImgLoader* loader = NULL;
+	
+	if (0 == strcmp("BmpLoader", loaderType)) {
+		loader = FBmpLoader_create();
+	}
+	else if (0 == strcmp("JpegLoader", loaderType)) {
+		loader = FJpegLoader_create();
+	}
+	else if (0 == strcmp("PngLoader", loaderType)) {
+		loader = FPngLoader_create();
+	}
+	else if (0 == strcmp("ImageLoaders", loaderType)) {
+		loader = FImgLoaders_create();
+	}
+
+	return loader;
+}
 
 // public:
 FImg* FImgLoader_image(FImgLoader* me)
@@ -75,9 +99,7 @@ FImg* FImgLoader_image(FImgLoader* me)
 // public static:
 FImgLoader* FImgLoader_create()
 {
-	FImgLoaders *loaders = (FImgLoaders *)malloc(sizeof(FImgLoaders));
-	FImgLoaders_ctor(loaders);
-	return (FImgLoader*)loaders;
+	return SimpleFactory_create("ImageLoaders");
 }
 
 void FImgLoader_destroy(FImgLoader* me)
@@ -85,6 +107,7 @@ void FImgLoader_destroy(FImgLoader* me)
 	me->dtor(me);
 	free(me);
 }
+
 
 
 /**
@@ -126,6 +149,13 @@ static void FBmpLoader_ctor(FBmpLoader* me)
 static void FBmpLoader_dtor(FBmpLoader* me)
 {
 	FImgLoader_dtor(&me->super);
+}
+
+static FImgLoader *FBmpLoader_create()
+{
+	FBmpLoader *bmpLoader = (FBmpLoader*)malloc(sizeof(FBmpLoader));
+	FBmpLoader_ctor(bmpLoader);
+	return (FImgLoader*)bmpLoader;
 }
 
 static BOOL FBmpLoader_load(FBmpLoader* me, const char* imgFile)
@@ -205,6 +235,13 @@ static void FJpegLoader_dtor(FJpegLoader* me)
 	FImgLoader_dtor(&me->super);
 }
 
+static FImgLoader *FBmpLoader_create()
+{
+	FJpegLoader *jpegLoader = (FBmpLoader*)malloc(sizeof(FBmpLoader));
+	FJpegLoader_ctor(jpegLoader);
+	return (FImgLoader*)jpegLoader;
+}
+
 static BOOL FJpegLoader_load(FJpegLoader* me, const char* imgFile)
 {
 	return FALSE;
@@ -226,6 +263,13 @@ static void FPngLoader_dtor(FPngLoader* me)
 	FImgLoader_dtor(&me->super);
 }
 
+static FImgLoader *FBmpLoader_create()
+{
+	FPngLoader *pngLoader = (FBmpLoader*)malloc(sizeof(FBmpLoader));
+	FPngLoader_ctor(pngLoader);
+	return (FImgLoader*)pngLoader;
+}
+
 static BOOL FPngLoader_load(FPngLoader* me, const char* imgFile)
 {
 	return FALSE;
@@ -244,22 +288,15 @@ static void FImgLoaders_ctor(FImgLoaders* me)
 	//初始化其他元素
 	FList_ctor(&me->loaders);
 
-	//bmp
-	FBmpLoader* bmpLoader = (FBmpLoader*)malloc(sizeof(FBmpLoader));
-	FBmpLoader_ctor(bmpLoader);
-
-	//jpeg
-	FJpegLoader* jpegLoader = (FJpegLoader*)malloc(sizeof(FJpegLoader));
-	FJpegLoader_ctor(jpegLoader);
-
-	//png
-	FPngLoader* pngLoader = (FPngLoader*)malloc(sizeof(FPngLoader));
-	FPngLoader_ctor(pngLoader);
+	//创建加载器 bmp jpeg png
+	FImgLoader* bmpLoader = SimpleFactory_create("BmpLoader");
+	FImgLoader* jpegLoader = SimpleFactory_create("JpegLoader");
+	FImgLoader* pngLoader = SimpleFactory_create("PngLoader");
 
 	//注册加载器
-	FImgLoaders_registerLoader(me, (FImgLoader*)bmpLoader);
-	FImgLoaders_registerLoader(me, (FImgLoader*)jpegLoader);
-	FImgLoaders_registerLoader(me, (FImgLoader*)pngLoader);
+	FImgLoaders_registerLoader(me, bmpLoader);
+	FImgLoaders_registerLoader(me, jpegLoader);
+	FImgLoaders_registerLoader(me, pngLoader);
 }
 
 static void FImgLoaders_dtor(FImgLoaders* me)
@@ -274,6 +311,13 @@ static void FImgLoaders_dtor(FImgLoaders* me)
 	FList_dtor(&me->loaders);
 	//析构基类
 	FImgLoader_dtor(&me->super);
+}
+
+static FImgLoader* FImgLoaders_create()
+{
+	FImgLoaders *loaders = (FImgLoaders *)malloc(sizeof(FImgLoaders));
+	FImgLoaders_ctor(loaders);
+	return (FImgLoader*)loaders;
 }
 
 static BOOL FImgLoaders_load(FImgLoaders* me, const char* imgFile)
