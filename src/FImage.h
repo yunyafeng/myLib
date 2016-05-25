@@ -61,6 +61,8 @@ BOOL	FImg_toRGB888	(FImg* me);
 
 BOOL	FImg_toARGB8888	(FImg* me);
 
+void 	FImg_output		(FImg* me, FILE* stream);
+
 void 	FImg_resize(FImg* me, F32 wScale, F32 hScale, U32 zoomHint);
 
 #ifdef __cplusplus

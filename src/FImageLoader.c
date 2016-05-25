@@ -61,28 +61,30 @@ static void FImgLoader_ctor(FImgLoader* me, FImageLoad load, FImgLoaderDtor dtor
 {
 	me->load = load;
 	me->dtor = dtor;
-	FImg_ctor(&me->image, FIMG_RGB888, 0, 0);
+	me->image = NULL;
 }
 
 static void FImgLoader_dtor(FImgLoader* me)
 {
-	FImg_dtor(&me->image);
+	me->load = NULL;
+	me->dtor = NULL;
+	me->image = NULL;
 }
 
 static FImgLoader* SimpleFactory_create(const char* loaderType)
 {
 	FImgLoader* loader = NULL;
 	
-	if (0 == strcmp("BmpLoader", loaderType)) {
+	if (0 == strcasecmp("BmpLoader", loaderType)) {
 		loader = FBmpLoader_create();
 	}
-	else if (0 == strcmp("JpegLoader", loaderType)) {
+	else if (0 == strcasecmp("JpegLoader", loaderType)) {
 		loader = FJpegLoader_create();
 	}
-	else if (0 == strcmp("PngLoader", loaderType)) {
+	else if (0 == strcasecmp("PngLoader", loaderType)) {
 		loader = FPngLoader_create();
 	}
-	else if (0 == strcmp("ImageLoaders", loaderType)) {
+	else if (0 == strcasecmp("ImageLoaders", loaderType)) {
 		loader = FImgLoaders_create();
 	}
 
@@ -92,7 +94,7 @@ static FImgLoader* SimpleFactory_create(const char* loaderType)
 // public:
 FImg* FImgLoader_image(FImgLoader* me)
 {
-	return &me->image;
+	return me->image;
 }
 
 
@@ -116,28 +118,28 @@ void FImgLoader_destroy(FImgLoader* me)
 //对应.bmp的文件头结构
 typedef struct _bitmap_fileheader
 {
-    U16 usFillChar;      //填充字符，用于对齐字边界
-    U16 usFileType;      //文件类型，0x424D('BM')为文件中的存储序列，小端存储
-    U32 uiFileSize;      //文件大小，文件占用的字节大小
-    U16 usReserved1;     //保留字1，值必须为0
-    U16 usReserved2;     //保留字2，值必须为0
-    U32 uiDataOffset;    //偏移量，文件头到实际位图数据的偏移量，以字节为单位
+    U16 reseved;      	//填充字符，用于对齐字边界
+    U16 fileType;      	//文件类型，0x424D('BM')为文件中的存储序列，小端存储
+    U32 fileSize;      	//文件大小，文件占用的字节大小
+    U16 reseved1;     	//保留字1，值必须为0
+    U16 reseved2;     	//保留字2，值必须为0
+    U32 dataOffset;    	//偏移量，文件头到实际位图数据的偏移量，以字节为单位
 } BmpFh;
 
 //对应.bmp的信息头结构
 typedef struct _bitmap_infoheader
 {
-    U32 uiInfoSize;      //信息头大小，该信息头占用的字节大小，值为40
-    U32 uiImgWidth;      //图像宽度
-    U32 uiImgHeight;     //图像高度，目前只支持倒向位图(左下角为原点)
-    U16 usDevPlanes;     //目标设备位面数，值必须为1
-    U16 usBitCount;      //每像素所占比特数，目前只支持1位色、8位色、24位色
-    U32 uiCompression;   //压缩算法，目前只支持不压缩图像(BI_RGB，BI_RGB==0)
-    U32 uiImgSize;       //图像大小，图像占用的字节大小，其值必须为4的倍数
-    U32 uiXRes;          //水平分辨率，单位为像素/米
-    U32 uiYRes;          //垂直分辨率，单位为像素/米
-    U32 uiClrUsed;       //实际使用的颜色数
-    U32 uiClrImportant;  //重要的颜色数
+    U32 infoSize;      	//信息头大小，该信息头占用的字节大小，值为40
+    U32 imgWidth;      	//图像宽度
+    U32 imgHeight;     	//图像高度，目前只支持倒向位图(左下角为原点)
+    U16 devPlanes;     	//目标设备位面数，值必须为1
+    U16 bitCount;      	//每像素所占比特数
+    U32 compression;   	//压缩算法，目前只支持不压缩图像(BI_RGB，BI_RGB==0)
+    U32 imgSize;       	//图像大小，图像占用的字节大小，其值必须为4的倍数
+    U32 xRes;          	//水平分辨率，单位为像素/米
+    U32 yRes;          	//垂直分辨率，单位为像素/米
+    U32 clrUsed;       	//实际使用的颜色数
+    U32 crImportant;  	//重要的颜色数
 } BmpIh;
 
 static void FBmpLoader_ctor(FBmpLoader* me)
@@ -148,6 +150,10 @@ static void FBmpLoader_ctor(FBmpLoader* me)
 
 static void FBmpLoader_dtor(FBmpLoader* me)
 {
+	if (me->super.image) {
+		FImg_dtor(me->super.image);
+		free(me->super.image);
+	}
 	FImgLoader_dtor(&me->super);
 }
 
@@ -157,7 +163,7 @@ static FImgLoader *FBmpLoader_create()
 	FBmpLoader_ctor(bmpLoader);
 	return (FImgLoader*)bmpLoader;
 }
-
+ 
 static BOOL FBmpLoader_load(FBmpLoader* me, const char* imgFile)
 {
 	BmpFh fh;
@@ -172,37 +178,42 @@ static BOOL FBmpLoader_load(FBmpLoader* me, const char* imgFile)
 
     //尝试读取位图文件头和信息头
     fseek(fp, 0, SEEK_SET);
-    if ((14 != fread(&fh.usFileType, 1, 14, fp)) || 
+    if ((14 != fread(&fh.fileType, 1, 14, fp)) || 
         (40 != fread(&ih, 1, 40, fp))) {
 		fclose(fp);
 		return FALSE;
-	}
+	} 
 
     //检查位图文件格式
-    if ((fh.usFileType != 0x4d42) || 
-        (ih.uiInfoSize != sizeof(BmpIh)) || 
-        (ih.usBitCount != 24) || 
-        ih.uiCompression) {
+    if ((fh.fileType != 0x4d42) || 
+        (ih.infoSize != sizeof(BmpIh)) || 
+        (ih.bitCount != 16 && ih.bitCount != 24 && ih.bitCount != 32) || 
+        ih.compression) {
 		fclose(fp);
 		return FALSE;
     }
 
     //分别计算BMP和IMG的每行图像数据长度，注意BMP按32位对齐而IMG按8位对齐
-    U32 bmpLineSize = f_round_up(ih.uiImgWidth * ih.usBitCount, 32) / 8;
-    U32 imgLineSize = f_round_up(ih.uiImgWidth * ih.usBitCount, 8) / 8;
+    U32 bmpLineSize = f_round_up(ih.imgWidth * ih.bitCount, 32) / 8;
+    U32 imgLineSize = f_round_up(ih.imgWidth * ih.bitCount, 8) / 8;
+
+	//创建IMAGE
+	if (NULL != me->super.image) {
+		FImg_dtor(me->super.image);
+	}
+	else {
+		me->super.image = (FImg*)malloc(sizeof(FImg));
+	}
+	FImg_ctor(me->super.image, ih.bitCount, ih.imgWidth, ih.imgHeight);
+    U8* imgData = FImg_data(me->super.image);
 	
-	FImg image;
-	FImg_ctor(&image, FIMG_RGB888, ih.uiImgWidth, ih.uiImgHeight);
-    U8* imgData = FImg_data(&image);
-	//指向最后一行
-    imgData += imgLineSize * (ih.uiImgHeight - 1);
-	
+	//指向最后一行(注意目前只支持倒向位图，即BMP数据在垂直方向翻转)
+    imgData += imgLineSize * (ih.imgHeight - 1);
     //为逐行读取图像数据尝试开辟行缓冲
     U8 *bmpLine = (U8 *) malloc(bmpLineSize);
-
-	//逐行读取BMP图像数据，注意目前只支持倒向位图，即BMP数据在垂直方向翻转
-	fseek(fp, fh.uiDataOffset, SEEK_SET);
-    for (h = 0; h < ih.uiImgHeight; h++) {
+	//逐行读取BMP图像数据,写入image中
+	fseek(fp, fh.dataOffset, SEEK_SET);
+    for (h = 0; h < ih.imgHeight; h++) {
        	fread(bmpLine, 1, bmpLineSize, fp);
         memcpy(imgData, bmpLine, imgLineSize);
         imgData -= imgLineSize;
@@ -212,10 +223,6 @@ static BOOL FBmpLoader_load(FBmpLoader* me, const char* imgFile)
     free(bmpLine);
 	fclose(fp);
 
-	//赋值image
-	FImg_dtor(&(me->super.image));
-	me->super.image = image;
-	
 	return TRUE;
 }
 
@@ -279,6 +286,7 @@ static BOOL FPngLoader_load(FPngLoader* me, const char* imgFile)
 
 /**
  * 加载器组合的接口实现
+ * 采用组合模式和职责链模式
  */ 
 static void FImgLoaders_ctor(FImgLoaders* me)
 {
@@ -329,8 +337,7 @@ static BOOL FImgLoaders_load(FImgLoaders* me, const char* imgFile)
 	for (i = 0; i < count; ++i) {
 		FImgLoader* loader = (FImgLoader*)FList_atIndex(loaders, i);
 		if (loader->load(loader, imgFile)) {
-			FImg_dtor(&(me->super.image));
-			me->super.image = FImg_copy(FImgLoader_image(loader));
+			me->super.image = FImgLoader_image(loader);
 			return TRUE;
 		}
 	}

@@ -1,11 +1,13 @@
 #include "FList.h"
 
+struct f_list_private;
+
 typedef struct f_list_node 
 {
-	struct f_list*		owner;
-	struct f_list_node*	next;
-	struct f_list_node*	prev;
-	void*				data;
+	struct f_list_private*	owner;
+	struct f_list_node*		next;
+	struct f_list_node*		prev;
+	void*					data;
 } FListNode;
 
 typedef struct f_list_private 
@@ -68,7 +70,7 @@ static BOOL FList_removeNode(FList* me, FListNode* node)
 {
 	//F_ASSERT(me && me->d);
 	
-	if ((0 == me->d->count) || (node->owner != me))
+	if ((0 == me->d->count) || (node->owner != me->d))
 		return FALSE;
 
 	if (1 == me->d->count) {
@@ -110,7 +112,7 @@ static BOOL FList_insertNode(FList* me, FListNode* beforeNode, FListNode* newNod
 	if (beforeNode == me->d->head) {
 		me->d->head = newNode;
 	}
-	newNode->owner = me;
+	newNode->owner = me->d;
 	me->d->count++;
 
 	return TRUE;
@@ -121,9 +123,9 @@ static int FList_nodeCompare(const void* node1, const void*node2)
 {
 	FListNode *n1 = *((FListNode**)node1);
 	FListNode *n2 = *((FListNode**)node2);
-	FListCompare compare = n1->owner->d->compare;
+	FListCompare compare = n1->owner->compare;
 
-	return compare(n1->data, n2->data);
+	return !compare(n1->data, n2->data);
 }
 
 
@@ -166,7 +168,6 @@ BOOL FList_insertAtIndex(FList* me, U32 index, const void* data)
 	F_ASSERT(me && me->d, "You must call the [FList_ctor] before use it");
 	
 	if (index > me->d->count) {
-		F_LOG(F_LOG_ERROR, "FList(%p) insert out of range\n", me);
 		return FALSE;
 	}
 
@@ -201,7 +202,7 @@ BOOL FList_insertAtIndex(FList* me, U32 index, const void* data)
 		}
 	}
 	
-	node->owner = me;
+	node->owner = me->d;
 	me->d->count++;
 	
 	return TRUE;
@@ -214,9 +215,10 @@ void* FList_takeAtIndex(FList* me, U32 index)
 	FListNode* node = FList_nodeOfIndex(me, index);
 	if (node) {
 		void* result = node->data;
-		FList_removeNode(me, node);
-		free(node);
-		return result;
+		if (FList_removeNode(me, node)) {
+			free(node);
+			return result;
+		}
 	}
 	else {
 		F_LOG(F_LOG_ERROR, "FList(%p) take out of range\n", me);
@@ -263,9 +265,10 @@ void* FList_takeAtIter(FList* me, FListIterator* iter)
 		FListNode* node = (FListNode*)(iter->p);
 		void* result = node->data;
 		FListIterator_inc(iter);
-		FList_removeNode(me, node);
-		free(node);
-		return result;
+		if (FList_removeNode(me, node)) {
+			free(node);
+			return result;
+		}
 	}
 	return NULL;
 }
@@ -275,7 +278,7 @@ void* FList_atIter(FList* me, FListIterator* iter)
 	if (FListIterator_isVaild(iter))
 	{
 		FListNode *node = (FListNode*)(iter->p);
-		if (node->owner != me) {
+		if (node->owner != me->d) {
 			return NULL;
 		}
 		else {
@@ -303,10 +306,13 @@ void* FList_popBack(FList* me)
 
 	FListNode *node = me->d->tail;
 	void* result = node->data;
-	FList_removeNode(me, node);
-	free(node);
 	
-	return result;
+	if (FList_removeNode(me, node)) {
+		free(node);
+		return result;
+	}
+	
+	return NULL;
 }
 
 void FList_clear(FList* me) 
@@ -437,7 +443,7 @@ int FList_findForward(FList* me, const void* data, FListCompare compare)
 		posi < (int)me->d->count; 
 		++posi, node = node->next
 	) {
-		if (0 == compare(node->data, data)) {
+		if (compare(node->data, data)) {
 			find = (I32)posi;
 			break;
 		}
@@ -460,7 +466,7 @@ int FList_findBackward(FList* me, const void* data, FListCompare compare)
 		posi >= 0; 
 		++posi, node = node->next
 	) {
-		if (0 == compare(node->data, data)) {
+		if (compare(node->data, data)) {
 			find = (I32)posi;
 			break;
 		}
@@ -488,7 +494,7 @@ void FListIterator_inc(FListIterator* me)
 	
 	me->i++;
 	if (node) {
-		if (node != node->owner->d->tail) {
+		if (node != node->owner->tail) {
 			me->p = node->next;
 		}
 		else {
@@ -503,7 +509,7 @@ void FListIterator_dec(FListIterator* me)
 	
 	me->i--;
 	if (node) {
-		if (node->owner->d->head != node) {
+		if (node->owner->head != node) {
 			me->p = node->prev;
 		}
 		else {

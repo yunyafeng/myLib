@@ -32,7 +32,7 @@ typedef struct f_image_private
 
 /*
  *
- * 浮点运算采用 20.12的方式优化
+ * 浮点运算采用 17.15的方式优化
  * 要在充分了解需求表示的数值的范围以及所有可能特殊情况下使用
  * 在本场景下小数位最多为15位 即 17.15
  */
@@ -170,6 +170,13 @@ BOOL FImg_toARGB8888(FImg* me)
 	return FALSE;
 }
 
+void FImg_output(FImg* me, FILE* stream)
+{
+	F_ASSERT(me && me->d, "You must call the [FImg_ctor] before use it");
+	fprintf(stream, "Image(%p):", me);
+	fprintf(stream, "[Size(%d, %d), Depth(%d)]\n", me->d->width, me->d->height, me->d->depth);
+}
+
 //缩放图像
 void FImg_resize(FImg* me, F32 wScale, F32 hScale, U32 zoomHint)
 {
@@ -207,7 +214,7 @@ void FImg_resize(FImg* me, F32 wScale, F32 hScale, U32 zoomHint)
 // 最近像素插值算法（Nearest Neighbour interpolation）
 // x' = xscale * x + xsheer * y + dx
 // y' = yscale * y + ysheer * x + dy
-// 该函数使用16.16定点数优化
+// 该函数使用17.15定点数优化
 static void FImg_ZoomNearestNeighbour16(FImg *pDst, FImg *pSrc)
 {
 	U32 x, y;
@@ -284,7 +291,7 @@ static void FImg_ZoomNearestNeighbour(FImg *pDst, FImg *pSrc)
 //双线性插值（Bilinear interpolation）
 // f(x, y) = (1-u)*(1-v)*f(x1,y1) + (1-u)*v*f(x1,y2) + u*(1-v)*f(x2, y1) + u*v*f(x2, y2)
 // x2 = x1 + 1, y2 = y1 + 1
-// 该函数使用16.16定点数优化
+// 该函数使用17.15定点数优化
 static void FImg_ZoomBilinear16(FImg *pDst, FImg *pSrc)
 {
 	U32 x, y;
@@ -340,14 +347,14 @@ static void FImg_ZoomBilinear24(FImg *pDst, FImg *pSrc)
 
 	for (y = 0; y < pDst->d->height; ++y) {
 		y1 = (y * yRatio);
-		u = y1 & DecMask; 		//小数部分
-		y1 &= IntMask;			//整数部分
+		u = y1 & DecMask; 				//小数部分
+		y1 &= IntMask;					//整数部分
 		y1 >>= DecBits;					//坐标值
 		y2 = (y == (pDst->d->height - 1)) ? y1 : y1 + 1;
 		for (x = 0; x < pDst->d->width; ++x) {
 			x1 = (x * xRatio);
-			v = x1 & DecMask; 	//小数部分
-			x1 &= IntMask;		//整数部分
+			v = x1 & DecMask; 			//小数部分
+			x1 &= IntMask;				//整数部分
 			x1 >>= DecBits;				//坐标值
 			x2 = (x == (pDst->d->width- 1)) ? x1 : x1 + 1;
 	

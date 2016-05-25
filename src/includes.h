@@ -2,6 +2,7 @@
 #define __INCLUDES_H
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 #ifdef __cplusplus
@@ -53,13 +54,13 @@ extern "C" {
 
 
 #if (ENABLE_DEBUG)
-static const char strLog[][10] = {{"VERBOSE"}, {"TRACE"}, {"DEBUG"}, {"INFOR"}, {"ERROR"}};
+static const char f_strLog_message[][10] = {{"VERBOSE"}, {"TRACE"}, {"DEBUG"}, {"INFOR"}, {"ERROR"}};
 #define F_LOG(level, format, ...) \
 	do {\
     	if (level >= F_LOG_LEVEL)\
     	{\
 			fprintf(stderr, "[%s In function (%s)] " format, \
-				strLog[level], __func__, ##__VA_ARGS__); \
+				f_strLog_message[level], __func__, ##__VA_ARGS__); \
     	}\
     } while (0)
 #else

@@ -21,7 +21,7 @@ typedef struct f_list_iterator
 	void* 	p;
 } FListIterator;
 
-typedef int (*FListCompare)(const void*, const void*);
+typedef BOOL (*FListCompare)(const void*, const void*);
 
 #define f_container_of(ptr, type, member) \
 ({\

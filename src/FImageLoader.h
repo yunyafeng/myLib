@@ -20,7 +20,7 @@ typedef void (*FImgLoaderDtor)(struct f_img_loader*);
 typedef struct f_img_loader {
 	FImageLoad 		load;
 	FImgLoaderDtor 	dtor;
-	FImg			image;
+	FImg*			image;
 } FImgLoader;
 
 
