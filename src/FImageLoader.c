@@ -53,7 +53,7 @@ static BOOL FImgLoaders_registerLoader(FImgLoaders* me, FImgLoader* loader);
 
 
 /**
- * Image加载器基础类
+ * Image加载器基'类'函数实现
  */
 
 // private:
@@ -113,7 +113,7 @@ void FImgLoader_destroy(FImgLoader* me)
 
 
 /**
- * 派生类Bmp加载器的接口实现
+ * 派生'类'Bmp加载器的接口实现
  */ 
 //对应.bmp的文件头结构
 typedef struct _bitmap_fileheader
@@ -229,7 +229,7 @@ static BOOL FBmpLoader_load(FBmpLoader* me, const char* imgFile)
 
 
 /**
- * 派生类Jpeg加载器的接口实现
+ * 派生'类'Jpeg加载器的接口实现
  */ 
 static void FJpegLoader_ctor(FJpegLoader* me)
 {
@@ -257,7 +257,7 @@ static BOOL FJpegLoader_load(FJpegLoader* me, const char* imgFile)
 
 
 /**
- * 派生类Png加载器的接口实现
+ * 派生'类'Png加载器的接口实现
  */ 
 static void FPngLoader_ctor(FPngLoader* me)
 {
@@ -285,7 +285,7 @@ static BOOL FPngLoader_load(FPngLoader* me, const char* imgFile)
 
 
 /**
- * 加载器组合的接口实现
+ * 加载器组合的接口实现,继承FImgLoader
  * 采用组合模式和职责链模式
  */ 
 static void FImgLoaders_ctor(FImgLoaders* me)
