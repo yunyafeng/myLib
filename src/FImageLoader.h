@@ -23,6 +23,13 @@ typedef struct f_img_loader {
 	FImg*			image;
 } FImgLoader;
 
+/**
+ * Image加载器基'类'函数实现
+ */
+void FImgLoader_ctor(FImgLoader* me, FImageLoad load, FImgLoaderDtor dtor);
+
+void FImgLoader_dtor(FImgLoader* me);
+
 
 //创建一个图像加载器
 FImgLoader* FImgLoader_create(void);

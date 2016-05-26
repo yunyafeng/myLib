@@ -30,13 +30,17 @@ STATICLIB	:= $(LIBDIR)/lib$(DEST).a
 
 INCDIR 		:= src
 SRCDIR 		:= src
+PSRCDIR		:= src/private
+PINCDIR		:= src/private
+
 C_SRC		+= $(wildcard $(SRCDIR)/*.c)
+P_SRC		+= $(wildcard $(PSRCDIR)/*.c)
+
 OBJS		+= $(patsubst $(SRCDIR)/%.c, $(OBJDIR)/%.o, $(C_SRC))
+OBJS		+= $(patsubst $(PSRCDIR)/%.c, $(OBJDIR)/%.o, $(P_SRC))
 
-CXX_SRC		+= $(wildcard $(SRCDIR)/*.cpp)
-OBJS		+= $(patsubst $(SRCDIR)/%.cpp, $(OBJDIR)/%.o, $(CXX_SRC))
 
-INC 		:= -I$(INCDIR)
+INC 		:= -I$(INCDIR) -I$(PINCDIR)
 WARNINGS 	:= -Wall
 CFLAGS 		:= $(WARNINGS) $(INC) -O2
 
@@ -56,7 +60,7 @@ check_directory:
 
 $(DYNAMICLIB):$(OBJS)
 	@$(PRINT) Creating $@ ....
-	@$(CC) -shared -fPIC -o $@ $^ -m32
+	@$(CC) -shared -fPIC -o $@ $^ 
 
 $(STATICLIB):$(OBJS)
 	@$(PRINT) Creating $@ ....
@@ -82,9 +86,9 @@ $(OBJDIR)/%.o:$(SRCDIR)/%.c
 	@$(PRINT) Compiling $< ....
 	@$(CC) -c -o $@ $< $(CFLAGS)
 
-$(OBJDIR)/%.o:$(SRCDIR)/%.cpp
+$(OBJDIR)/%.o:$(PSRCDIR)/%.c
 	@$(PRINT) Compiling $< ....
-	@$(CXX) -c -o $@ $< $(CFLAGS)
+	@$(CC) -c -o $@ $< $(CFLAGS)
 
 .PHONY: clean
 
