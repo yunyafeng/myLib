@@ -138,15 +138,56 @@ BOOL FImg_toRGB565(FImg* me)
 	if (me->d->depth == FIMG_RGB565)
 		return TRUE;
 	
-	//TODO...
-	switch (me->d->depth) 
-	{
-	case FIMG_RGB888:
-		break;
-	case FIMG_ARGB8888:
-		break;
-	default:
-		break;
+	if (me->d->data != NULL) {
+		U32 x, y;
+		FImg newImg;
+		FImg_ctor(&newImg, FIMG_RGB565, me->d->width, me->d->height);
+		TRGB16* dData = (TRGB16*)newImg.d->data;
+
+		/* 根据源的位深度进行转换 */
+		switch (me->d->depth) 
+		{
+		case FIMG_RGB888: {
+			TRGB24* sData = (TRGB24*)me->d->data;
+			for (y = 0; y < me->d->height; ++y) {
+				for (x = 0; x < me->d->width; ++x) {
+
+					/* 转换为16位(分别截断RGB分量) */
+					dData->B = sData->B >> 3;
+					dData->G = sData->G >> 2;
+					dData->R = sData->R >> 3;
+
+					//下一个像素点
+					dData += 1;
+					sData += 1;
+				}
+			}
+			FImg_dtor(me);
+			*me = newImg;
+			return TRUE;
+		}
+		case FIMG_ARGB8888: {
+			TRGB32* sData = (TRGB32*)me->d->data;
+			for (y = 0; y < me->d->height; ++y) {
+				for (x = 0; x < me->d->width; ++x) {
+
+					/* 转换为16位(分别截断RGB分量，丢弃alpha分量) */
+					dData->B = sData->B >> 3;
+					dData->G = sData->G >> 2;
+					dData->R = sData->R >> 3;
+
+					//下一个像素点
+					dData += 1;
+					sData += 1;
+				}
+			}
+			FImg_dtor(me);
+			*me = newImg;
+			return TRUE;
+		}
+		default:
+			break;
+		}
 	}
 
 	return FALSE;
@@ -156,8 +197,58 @@ BOOL FImg_toRGB888(FImg* me)
 {	
 	if (me->d->depth == FIMG_RGB888)
 		return TRUE;
-	//TODO...
 	
+	if (me->d->data != NULL) {
+		U32 x, y;
+		FImg newImg;
+		FImg_ctor(&newImg, FIMG_RGB888, me->d->width, me->d->height);
+		TRGB24* dData = (TRGB24*)newImg.d->data;
+
+		/* 根据源的位深度进行转换 */
+		switch (me->d->depth) 
+		{
+		case FIMG_RGB565: {
+			TRGB16* sData = (TRGB16*)me->d->data;
+			for (y = 0; y < me->d->height; ++y) {
+				for (x = 0; x < me->d->width; ++x) {
+
+					/* 转换为24位(扩展RGB分量,低位补0) */
+					dData->B = sData->B << 3;
+					dData->G = sData->G << 2;
+					dData->R = sData->R << 3;
+
+					//下一个像素点
+					dData += 1;
+					sData += 1;
+				}
+			}
+			FImg_dtor(me);
+			*me = newImg;
+			return TRUE;
+		}
+		case FIMG_ARGB8888: {
+			TRGB32* sData = (TRGB32*)me->d->data;
+			for (y = 0; y < me->d->height; ++y) {
+				for (x = 0; x < me->d->width; ++x) {
+
+					/* 转换为24位(丢弃alpha分量) */
+					dData->B = sData->B;
+					dData->G = sData->G;
+					dData->R = sData->R;
+
+					//下一个像素点
+					dData += 1;
+					sData += 1;
+				}
+			}
+			FImg_dtor(me);
+			*me = newImg;
+			return TRUE;
+		}
+		default:
+			break;
+		}
+	}	
 	return FALSE;
 }
 
@@ -165,7 +256,60 @@ BOOL FImg_toARGB8888(FImg* me)
 {
 	if (me->d->depth == FIMG_ARGB8888)
 		return TRUE;
-	//TODO...
+	
+	if (me->d->data != NULL) {
+		U32 x, y;
+		FImg newImg;
+		FImg_ctor(&newImg, FIMG_ARGB8888, me->d->width, me->d->height);
+		TRGB32* dData = (TRGB32*)newImg.d->data;
+
+		/* 根据源的位深度进行转换 */
+		switch (me->d->depth) 
+		{
+		case FIMG_RGB565: {
+			TRGB16* sData = (TRGB16*)me->d->data;
+			for (y = 0; y < me->d->height; ++y) {
+				for (x = 0; x < me->d->width; ++x) {
+
+					/* 转换为32位(扩展RGB分量,低位补0,alpha分量默认为0) */
+					dData->B = sData->B << 3;
+					dData->G = sData->G << 2;
+					dData->R = sData->R << 3;
+					dData->A =  0;
+
+					//下一个像素点
+					dData += 1;
+					sData += 1;
+				}
+			}
+			FImg_dtor(me);
+			*me = newImg;
+			return TRUE;
+		}
+		case FIMG_RGB888: {
+			TRGB24* sData = (TRGB24*)me->d->data;
+			for (y = 0; y < me->d->height; ++y) {
+				for (x = 0; x < me->d->width; ++x) {
+
+					/* 转换为32位(alpha分量默认为0) */
+					dData->B = sData->B;
+					dData->G = sData->G;
+					dData->R = sData->R;
+					dData->A =  0;
+
+					//下一个像素点
+					dData += 1;
+					sData += 1;
+				}
+			}
+			FImg_dtor(me);
+			*me = newImg;
+			return TRUE;
+		}
+		default:
+			break;
+		}
+	}	
 	
 	return FALSE;
 }
@@ -206,7 +350,7 @@ void FImg_resize(FImg* me, F32 wScale, F32 hScale, U32 zoomHint)
 	}
 
 	FImg_dtor(me);
-	me->d = newImg.d;
+	*me = newImg;
 }
 
 
@@ -222,12 +366,14 @@ static void FImg_ZoomNearestNeighbour16(FImg *pDst, FImg *pSrc)
 	
 	U32 xRatio = (pSrc->d->width << DecBits) / pDst->d->width;
 	U32 yRatio = (pSrc->d->height << DecBits) / pDst->d->height;
+	TRGB16* dData = (TRGB16*)pDst->d->data;
 
 	for (y = 0; y < pDst->d->height; ++y) {	
 		sy = (y * yRatio) >> DecBits;	
 		for (x = 0; x < pDst->d->width; ++x) {			
 			sx = (x * xRatio) >> DecBits;
-			(*Pixel(TRGB16, pDst, x, y)) = (*Pixel(TRGB16, pSrc, sx, sy));
+			*dData++ = (*Pixel(TRGB16, pSrc, sx, sy));
+			//(*Pixel(TRGB16, pDst, x, y)) = (*Pixel(TRGB16, pSrc, sx, sy));
 		}
 	}
 }
@@ -239,12 +385,14 @@ static void FImg_ZoomNearestNeighbour24(FImg *pDst, FImg *pSrc)
 	
 	U32 xRatio = (pSrc->d->width << DecBits) / pDst->d->width;
 	U32 yRatio = (pSrc->d->height << DecBits) / pDst->d->height;
+	TRGB24* dData = (TRGB24*)pDst->d->data;
 
 	for (y = 0; y < pDst->d->height; ++y) {	
 		sy = (y * yRatio) >> DecBits;	
 		for (x = 0; x < pDst->d->width; ++x) {			
 			sx = (x * xRatio) >> DecBits;
-			(*Pixel(TRGB24, pDst, x, y)) = (*Pixel(TRGB24, pSrc, sx, sy));
+			*dData++ = (*Pixel(TRGB24, pSrc, sx, sy));
+			//(*Pixel(TRGB24, pDst, x, y)) = (*Pixel(TRGB24, pSrc, sx, sy));
 		}
 	}
 }
@@ -256,12 +404,14 @@ static void FImg_ZoomNearestNeighbour32(FImg *pDst, FImg *pSrc)
 	
 	U32 xRatio = (pSrc->d->width << DecBits) / pDst->d->width;
 	U32 yRatio = (pSrc->d->height << DecBits) / pDst->d->height;
+	TRGB32* dData = (TRGB32*)pDst->d->data;
 
 	for (y = 0; y < pDst->d->height; ++y) {	
 		sy = (y * yRatio) >> DecBits;	
 		for (x = 0; x < pDst->d->width; ++x) {			
 			sx = (x * xRatio) >> DecBits;
-			(*Pixel(TRGB32, pDst, x, y)) = (*Pixel(TRGB32, pSrc, sx, sy));
+			*dData++ = (*Pixel(TRGB32, pSrc, sx, sy));
+			//(*Pixel(TRGB32, pDst, x, y)) = (*Pixel(TRGB32, pSrc, sx, sy));
 		}
 	}
 }
@@ -300,6 +450,7 @@ static void FImg_ZoomBilinear16(FImg *pDst, FImg *pSrc)
 	
 	U32 xRatio = (pSrc->d->width << DecBits) / pDst->d->width;
 	U32 yRatio = (pSrc->d->height << DecBits) / pDst->d->height;
+	TRGB16* dData = (TRGB16*)pDst->d->data;
 
 	for (y = 0; y < pDst->d->height; ++y) {
 		y1 = (y * yRatio);
@@ -324,13 +475,21 @@ static void FImg_ZoomBilinear16(FImg *pDst, FImg *pSrc)
 			U32 c = (One - u) * v >> DecBits;
 			U32 d = v * u >> DecBits;	
 
-			TRGB16 target;
+			
+			dData->R = (a * p1.R + b * p2.R + c * p3.R + d * p4.R) >> DecBits;
+			dData->G = (a * p1.G + b * p2.G + c * p3.G + d * p4.G) >> DecBits;
+			dData->B = (a * p1.B + b * p2.B + c * p3.B + d * p4.B) >> DecBits;
+			dData += 1;
 
+			/*
+			TRGB16 target;
+			
 			target.R = (a * p1.R + b * p2.R + c * p3.R + d * p4.R) >> DecBits;
 			target.G = (a * p1.G + b * p2.G + c * p3.G + d * p4.G) >> DecBits;
 			target.B = (a * p1.B + b * p2.B + c * p3.B + d * p4.B) >> DecBits;
 
 			*Pixel(TRGB16, pDst, x, y) = target;
+			*/
 		}
 	}
 }
@@ -344,6 +503,7 @@ static void FImg_ZoomBilinear24(FImg *pDst, FImg *pSrc)
 	
 	U32 xRatio = (pSrc->d->width << DecBits) / pDst->d->width ;
 	U32 yRatio = (pSrc->d->height << DecBits) / pDst->d->height ;
+	TRGB24* dData = (TRGB24*)pDst->d->data;
 
 	for (y = 0; y < pDst->d->height; ++y) {
 		y1 = (y * yRatio);
@@ -367,7 +527,12 @@ static void FImg_ZoomBilinear24(FImg *pDst, FImg *pSrc)
 			U32 b = (One - v) * u >> DecBits;
 			U32 c = (One - u) * v >> DecBits;
 			U32 d = v * u >> DecBits;	
-
+			
+			dData->R = (a * p1.R + b * p2.R + c * p3.R + d * p4.R) >> DecBits;
+			dData->G = (a * p1.G + b * p2.G + c * p3.G + d * p4.G) >> DecBits;
+			dData->B = (a * p1.B + b * p2.B + c * p3.B + d * p4.B) >> DecBits;
+			dData += 1;
+			/*
 			TRGB24 target;
 
 			target.R = (a * p1.R + b * p2.R + c * p3.R + d * p4.R) >> DecBits;
@@ -375,6 +540,7 @@ static void FImg_ZoomBilinear24(FImg *pDst, FImg *pSrc)
 			target.B = (a * p1.B + b * p2.B + c * p3.B + d * p4.B) >> DecBits;
 
 			*Pixel(TRGB24, pDst, x, y) = target;
+			*/
 		}
 	}
 }
@@ -387,6 +553,7 @@ static void FImg_ZoomBilinear32(FImg *pDst, FImg *pSrc)
 	
 	U32 xRatio = (pSrc->d->width << DecBits) / pDst->d->width;
 	U32 yRatio = (pSrc->d->height << DecBits) / pDst->d->height;
+	TRGB32* dData = (TRGB32*)pDst->d->data;
 
 	for (y = 0; y < pDst->d->height; ++y) {
 		y1 = (y * yRatio);
@@ -409,8 +576,15 @@ static void FImg_ZoomBilinear32(FImg *pDst, FImg *pSrc)
 			U32 a = (One - u) * (One - v) >> DecBits;
 			U32 b = (One - v) * u >> DecBits;
 			U32 c = (One - u) * v >> DecBits;
-			U32 d = v * u >> DecBits;	
+			U32 d = v * u >> DecBits;
 
+			
+			dData->R = (a * p1.R + b * p2.R + c * p3.R + d * p4.R) >> DecBits;
+			dData->G = (a * p1.G + b * p2.G + c * p3.G + d * p4.G) >> DecBits;
+			dData->B = (a * p1.B + b * p2.B + c * p3.B + d * p4.B) >> DecBits;
+			dData->A = (a * p1.A + b * p2.A + c * p3.A + d * p4.A) >> DecBits;
+			dData += 1;
+			/*
 			TRGB32 target;
 
 			target.R = (a * p1.R + b * p2.R + c * p3.R + d * p4.R) >> DecBits;
@@ -419,6 +593,7 @@ static void FImg_ZoomBilinear32(FImg *pDst, FImg *pSrc)
 			target.A = (a * p1.A + b * p2.A + c * p3.A + d * p4.A) >> DecBits;
 			
 			*Pixel(TRGB32, pDst, x, y) = target;
+			*/
 		}
 	}
 }
