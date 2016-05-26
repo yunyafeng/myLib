@@ -1,8 +1,8 @@
 CROSS	   	:= arm-none-linux-gnueabi-
-CC			:= $(CROSS)g++
-CXX			:= $(CROSS)g++
+CC			:= $(CROSS)gcc
+CXX			:= $(CROSS)gcc
 AR			:= $(CROSS)ar
-LD         	:= $(CROSS)g++
+LD         	:= $(CROSS)gcc
 OBJCOPY    	:= $(CROSS)objcopy
 OBJDUMP    	:= $(CROSS)objdump
 DELFILE		:= rm -rf
