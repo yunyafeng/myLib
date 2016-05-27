@@ -1,5 +1,5 @@
-#ifndef __INCLUDES_H
-#define __INCLUDES_H
+#ifndef __INCLUDES_H__
+#define __INCLUDES_H__
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -83,4 +83,4 @@ static const char f_strLog_message[][10] = {{"VERBOSE"}, {"TRACE"}, {"DEBUG"}, {
 }
 #endif
 
-#endif //__INCLUDES_H
+#endif //__INCLUDES_H__

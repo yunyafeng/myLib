@@ -1,6 +1,6 @@
 
-#ifndef __STRINGLIST_H_
-#define __STRINGLIST_H_
+#ifndef __STRINGLIST_H__
+#define __STRINGLIST_H__
 
 #include <stdio.h>
 
@@ -56,4 +56,4 @@ FStringList FStringList_stringTok(char* str, const char *delim);
 }
 #endif
 
-#endif //__STRINGLIST_H_
+#endif //__STRINGLIST_H__

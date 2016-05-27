@@ -19,7 +19,7 @@ static BOOL FImgLoaders_load(FImgLoaders* me, const char* imgFile);
 static BOOL FImgLoaders_registerLoader(FImgLoaders* me, FImgLoader* loader);
 
 
-//生产加载器的工厂(其实并没有什么卵用,为了套路而已)
+//生产加载器的工厂(其实并没有什么卵用)
 static FImgLoader* SimpleFactory_create(const char* loaderType);
 
 
@@ -93,15 +93,10 @@ static void FImgLoaders_ctor(FImgLoaders* me)
 	//初始化其他元素
 	FList_ctor(&me->loaders);
 
-	//创建加载器 bmp jpeg png
-	FImgLoader* bmpLoader = SimpleFactory_create("BmpLoader");
-	FImgLoader* jpegLoader = SimpleFactory_create("JpegLoader");
-	FImgLoader* pngLoader = SimpleFactory_create("PngLoader");
-
-	//注册加载器
-	FImgLoaders_registerLoader(me, bmpLoader);
-	FImgLoaders_registerLoader(me, jpegLoader);
-	FImgLoaders_registerLoader(me, pngLoader);
+	//创建并注册加载器
+	FImgLoaders_registerLoader(me, SimpleFactory_create("BmpLoader"));
+	FImgLoaders_registerLoader(me, SimpleFactory_create("JpegLoader"));
+	FImgLoaders_registerLoader(me, SimpleFactory_create("PngLoader"));
 }
 
 static void FImgLoaders_dtor(FImgLoaders* me)

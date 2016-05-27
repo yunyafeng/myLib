@@ -1,5 +1,5 @@
-#ifndef _IMAGELOADER_H_
-#define _IMAGELOADER_H_
+#ifndef __IMAGELOADER_H__
+#define __IMAGELOADER_H__
 
 #include "includes.h"
 #include "FImage.h"
@@ -44,4 +44,4 @@ FImg* FImgLoader_image(FImgLoader* me);
 #ifdef __cplusplus
 }
 #endif
-#endif
+#endif //__IMAGELOADER_H__
