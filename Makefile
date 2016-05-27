@@ -70,6 +70,7 @@ check_directory:
 
 $(DYNAMICLIB):$(OBJS)
 	@$(PRINT) Creating $@ ....
+	@$(INSTALL) $(LIBJPEG)/lib $(OUTDIR)
 	@$(CC) -shared -fPIC -o $@ $^ $(LDFLAGS)
 
 $(STATICLIB):$(OBJS)
@@ -82,7 +83,6 @@ headers:
 
 install:
 	@$(PRINT) Installing ....
-	@$(INSTALL) $(LIBJPEG)/lib $(OUTDIR)
 	@$(INSTALL) $(OUTDIR) $(Prefix)
 
 $(ELF):$(OBJS)
