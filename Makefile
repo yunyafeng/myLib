@@ -1,4 +1,12 @@
-CROSS	   	:= arm-none-linux-gnueabi-
+
+ifeq ($(ARM), 1)
+CROSS	   	= arm-none-linux-gnueabi-
+LIBJPEG		= depend/arm/libjpeg
+else
+LIBJPEG		= depend/x86/libjpeg
+M32			= -m32
+endif
+
 CC			:= $(CROSS)gcc
 CXX			:= $(CROSS)gcc
 AR			:= $(CROSS)ar
@@ -39,10 +47,12 @@ P_SRC		+= $(wildcard $(PSRCDIR)/*.c)
 OBJS		+= $(patsubst $(SRCDIR)/%.c, $(OBJDIR)/%.o, $(C_SRC))
 OBJS		+= $(patsubst $(PSRCDIR)/%.c, $(OBJDIR)/%.o, $(P_SRC))
 
-
-INC 		:= -I$(INCDIR) -I$(PINCDIR)
+LIBPATH		:= -L$(LIBJPEG)/lib
+INCPATH 	:= -I$(INCDIR) -I$(PINCDIR) -I$(LIBJPEG)/include
+LIBS		:= -ljpeg
 WARNINGS 	:= -Wall
-CFLAGS 		:= $(WARNINGS) $(INC) -O2
+CFLAGS 		:= $(WARNINGS) $(INCPATH) -O2 -fPIC $(M32)
+LDFLAGS 	:= $(LIBPATH) $(LIBS) -fPIC $(M32)
 
 ifeq ($(DEBUG), 1)
 CFLAGS		+= -g
@@ -60,7 +70,7 @@ check_directory:
 
 $(DYNAMICLIB):$(OBJS)
 	@$(PRINT) Creating $@ ....
-	@$(CC) -shared -fPIC -o $@ $^ 
+	@$(CC) -shared -fPIC -o $@ $^ $(LDFLAGS)
 
 $(STATICLIB):$(OBJS)
 	@$(PRINT) Creating $@ ....
@@ -71,7 +81,8 @@ headers:
 	@$(COPY) $(INCDIR)/*.h $(INCLUDE)
 
 install:
-	@$(PRINT) Installing ....	
+	@$(PRINT) Installing ....
+	@$(INSTALL) $(LIBJPEG)/lib $(OUTDIR)
 	@$(INSTALL) $(OUTDIR) $(Prefix)
 
 $(ELF):$(OBJS)
