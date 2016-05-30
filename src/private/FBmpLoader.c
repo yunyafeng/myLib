@@ -42,16 +42,16 @@ static BOOL FBmpLoader_load(FBmpLoader* me, const char* imgFile)
 	U32 h;
 
     /* 尝试打开位图文件 */
-    FILE* fp = fopen(imgFile, "r");
-	if (NULL == fp) {
+    FILE* inFile = fopen(imgFile, "r");
+	if (NULL == inFile) {
 		return FALSE;
 	}
 
     /* 尝试读取位图文件头和信息头 */
-    fseek(fp, 0, SEEK_SET);
-    if ((14 != fread(&fh.fileType, 1, 14, fp)) || 
-        (40 != fread(&ih, 1, 40, fp))) {
-		fclose(fp);
+    fseek(inFile, 0, SEEK_SET);
+    if ((14 != fread(&fh.fileType, 1, 14, inFile)) || 
+        (40 != fread(&ih, 1, 40, inFile))) {
+		fclose(inFile);
 		return FALSE;
 	} 
 
@@ -60,7 +60,7 @@ static BOOL FBmpLoader_load(FBmpLoader* me, const char* imgFile)
         (ih.infoSize != sizeof(BmpIh)) || 
         (ih.bitCount != 16 && ih.bitCount != 24 && ih.bitCount != 32) || 
         ih.compression) {
-		fclose(fp);
+		fclose(inFile);
 		return FALSE;
     }
 
@@ -83,9 +83,9 @@ static BOOL FBmpLoader_load(FBmpLoader* me, const char* imgFile)
     /* 为逐行读取图像数据尝试开辟行缓冲 */
     U8 *bmpLine = F_NEWARR(U8, bmpLineSize);
 	/* 逐行读取BMP图像数据,写入image中 */
-	fseek(fp, fh.dataOffset, SEEK_SET);
+	fseek(inFile, fh.dataOffset, SEEK_SET);
     for (h = 0; h < ih.imgHeight; h++) {
-       	int len = fread(bmpLine, 1, bmpLineSize, fp);
+       	int len = fread(bmpLine, 1, bmpLineSize, inFile);
         memcpy(imgData, bmpLine, imgLineSize);
         imgData -= imgLineSize;
 		len++;
@@ -93,7 +93,7 @@ static BOOL FBmpLoader_load(FBmpLoader* me, const char* imgFile)
 	
     /* 释放行缓冲 */
     F_DELETE(bmpLine);
-	fclose(fp);
+	fclose(inFile);
 
 	return TRUE;
 }
