@@ -134,7 +134,7 @@ static int FList_nodeCompare(const void* node1, const void*node2)
  */
 void FList_ctor(FList* me)
 {
-	me->d = (FListPrivate*)malloc(sizeof(FListPrivate));
+	me->d = F_NEW(FListPrivate);
 	FListPrivate_ctor(me->d);
 }
 
@@ -144,7 +144,7 @@ void FList_dtor(FList* me)
 		FList_takeAtIndex(me, 0);
 	}
 	FListPrivate_dtor(me->d);
-	free(me->d);
+	F_DELETE(me->d);
 	me->d = NULL;
 }
 
@@ -171,7 +171,7 @@ BOOL FList_insertAtIndex(FList* me, U32 index, const void* data)
 		return FALSE;
 	}
 
-	FListNode *node = (FListNode*)malloc(sizeof(FListNode));
+	FListNode *node = F_NEW(FListNode);
 	if (!node) {
 		return FALSE;
 	}
@@ -197,7 +197,7 @@ BOOL FList_insertAtIndex(FList* me, U32 index, const void* data)
 			return TRUE;
 		}
 		else {
-			free(node);
+			F_DELETE(node);
 			return FALSE;
 		}
 	}
@@ -216,7 +216,7 @@ void* FList_takeAtIndex(FList* me, U32 index)
 	if (node) {
 		void* result = node->data;
 		if (FList_removeNode(me, node)) {
-			free(node);
+			F_DELETE(node);
 			return result;
 		}
 	}
@@ -242,7 +242,7 @@ BOOL FList_insertBeforeIter(FList* me, FListIterator* iter, const void* data)
 		return FALSE;
 	}
 	
-	FListNode *node = (FListNode*)malloc(sizeof(FListNode));
+	FListNode *node = F_NEW(FListNode);
 	if (!node) {
 		return FALSE;
 	}
@@ -251,7 +251,7 @@ BOOL FList_insertBeforeIter(FList* me, FListIterator* iter, const void* data)
 		return TRUE;
 	}
 	else {
-		free(node);
+		F_DELETE(node);
 		return FALSE;
 	}
 }
@@ -266,7 +266,7 @@ void* FList_takeAtIter(FList* me, FListIterator* iter)
 		void* result = node->data;
 		FListIterator_inc(iter);
 		if (FList_removeNode(me, node)) {
-			free(node);
+			F_DELETE(node);
 			return result;
 		}
 	}
@@ -308,7 +308,7 @@ void* FList_popBack(FList* me)
 	void* result = node->data;
 	
 	if (FList_removeNode(me, node)) {
-		free(node);
+		F_DELETE(node);
 		return result;
 	}
 	
@@ -396,7 +396,7 @@ BOOL FList_quickSort(FList* me, FListCompare compare)
 	U32 count = me->d->count;
 
 	//ÉêÇëÏßÐÔ»º³åÇø
-	FListNode **sorted = (FListNode**)malloc(count * sizeof(FListNode*));
+	FListNode **sorted = F_NEWARR(FListNode*, count);
 	if (!sorted) {
 		F_LOG(F_LOG_ERROR, "FList(%p) sort need more memory\n", me);
 		return FALSE;
@@ -425,7 +425,7 @@ BOOL FList_quickSort(FList* me, FListCompare compare)
 	me->d->head->prev = me->d->tail;
 	me->d->tail->next = me->d->head;
 
-	free(sorted);
+	F_DELETE(sorted);
 	return TRUE;
 }
 

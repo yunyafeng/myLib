@@ -65,7 +65,7 @@ void FImg_ctor(FImg* me, U32 depth, U32 w, U32 h)
 
 	imgSize = lineSize * h;
 	totalBytes = sizeof(FImgPrivate) + imgSize;
-	me->d = (FImgPrivate*)malloc(totalBytes);
+	me->d = (FImgPrivate*)F_NEWARR(U8, totalBytes);
 	me->d->headerBytes = sizeof(FImgPrivate);
 	me->d->imgBytes = imgSize;
 	me->d->width = w;
@@ -93,7 +93,7 @@ FImg FImg_copy(FImg* me)
 
 void FImg_dtor(FImg* me)
 {
-	free(me->d);
+	F_DELETE(me->d);
 	me->d = NULL;
 }
 

@@ -1,7 +1,7 @@
 #ifndef __FPNGWRITER_H__
 #define __FPNGWRITER_H__
 
-#include "includes.h"
+#include "FIncludes.h"
 #include "FImage.h"
 
 #ifdef __cplusplus

@@ -56,7 +56,7 @@ FImgLoader* FImgLoader_create()
 void FImgLoader_destroy(FImgLoader* me)
 {
 	me->dtor(me);
-	free(me);
+	F_DELETE(me);
 }
 
 static FImgLoader* SimpleFactory_create(const char* loaderType)
@@ -105,7 +105,7 @@ static void FImgLoaders_dtor(FImgLoaders* me)
 	while (!FList_isEmpty(&me->loaders)) {
 		FImgLoader* loader =(FImgLoader*)FList_takeAtIndex(&me->loaders, 0);
 		loader->dtor(loader);
-		free(loader);
+		F_DELETE(loader);
 	}
 	//Îö¹¹List
 	FList_dtor(&me->loaders);
@@ -115,7 +115,7 @@ static void FImgLoaders_dtor(FImgLoaders* me)
 
 static FImgLoader* FImgLoaders_create()
 {
-	FImgLoaders *loaders = (FImgLoaders *)malloc(sizeof(FImgLoaders));
+	FImgLoaders *loaders = F_NEW(FImgLoaders);
 	FImgLoaders_ctor(loaders);
 	return (FImgLoader*)loaders;
 }

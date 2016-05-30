@@ -1,7 +1,7 @@
 #ifndef __FJPEGWRITER_H__
 #define __FJPEGWRITER_H__
 
-#include "includes.h"
+#include "FIncludes.h"
 #include "FImage.h"
 
 #ifdef __cplusplus

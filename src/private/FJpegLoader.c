@@ -56,7 +56,7 @@ static BOOL FJpegLoader_load(FJpegLoader* me, const char* imgFile)
  */
 FImgLoader *FJpegLoader_create()
 {
-	FJpegLoader *jpegLoader = (FJpegLoader*)malloc(sizeof(FJpegLoader));
+	FJpegLoader *jpegLoader = F_NEW(FJpegLoader);
 	FJpegLoader_ctor(jpegLoader);
 	return (FImgLoader*)jpegLoader;
 }

@@ -41,7 +41,7 @@ static BOOL FPngLoader_load(FPngLoader* me, const char* imgFile)
  */
 FImgLoader *FPngLoader_create()
 {
-	FPngLoader *pngLoader = (FPngLoader*)malloc(sizeof(FPngLoader));
+	FPngLoader *pngLoader = F_NEW(FPngLoader);
 	FPngLoader_ctor(pngLoader);
 	return (FImgLoader*)pngLoader;
 }

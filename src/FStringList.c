@@ -1,5 +1,4 @@
-#include <string.h>
-#include <stdlib.h>
+
 
 #include "FStringList.h"
 
@@ -35,8 +34,8 @@ static void FStringListPrivate_dtor(FStringListPrivate* me)
 {
 	F_ASSERT(me, "");
 	
-	free(me->strPtrs);
-	free(me->data);
+	F_DELETE(me->strPtrs);
+	F_DELETE(me->data);
 	me->count = 0;
 	me->strPtrsSize = 0;
 	me->strPtrs = NULL;
@@ -67,7 +66,7 @@ void FStringList_ctor(FStringList* me)
 {
 	F_ASSERT(me, "");
 	
-	me->d = (FStringListPrivate*)malloc(sizeof(FStringListPrivate));
+	me->d = F_NEW(FStringListPrivate);
 	FStringListPrivate_ctor(me->d);
 }
 
@@ -76,7 +75,7 @@ void FStringList_dtor(FStringList* me)
 	F_ASSERT(me && me->d, "You must call the [FStringList_ctor] before use it");
 	
 	FStringListPrivate_dtor(me->d);
-	free(me->d);
+	F_DELETE(me->d);
 	me->d = NULL;
 }
 
@@ -87,10 +86,10 @@ BOOL FStringList_reserved(FStringList* me, U32 count,  U32 bytes)
 	if (me->d->strPtrs || me->d->data)
 		return FALSE;
 	
-	me->d->strPtrs = (char**)malloc(sizeof(char*) * count);
+	me->d->strPtrs = F_NEWARR(char*, count); //malloc(sizeof(char*) * count);
 	if (me->d->strPtrs) {
 		me->d->strPtrsSize = count;
-		me->d->data = (char*)malloc(bytes);
+		me->d->data = F_NEWARR(char, bytes);//(char*)malloc(bytes);
 		if (me->d->data) {
 			me->d->dataSize = bytes;
 			return TRUE;
@@ -138,7 +137,7 @@ BOOL FStringList_pushBack(FStringList* me, const char *string)
 	
 	if (me->d->count > me->d->strPtrsSize)
 	{
-		char** newPtrs = (char**)realloc(me->d->strPtrs, sizeof(char*)*(me->d->strPtrsSize+8));
+		char** newPtrs = F_RENEW(char*, me->d->strPtrs, sizeof(char*)*(me->d->strPtrsSize+8));
 		if (!newPtrs) {
 			return FALSE;
 		}
@@ -149,7 +148,7 @@ BOOL FStringList_pushBack(FStringList* me, const char *string)
 	U32 len = strlen(string) + 1;
 	if (len > (me->d->dataSize - me->d->usedDataSize)) {
 		//预留一定的空间后续使用时不需在分配空间
-		char *newData = (char*)realloc(me->d->data, me->d->usedDataSize+len+512);
+		char *newData = F_RENEW(char, me->d->data, me->d->usedDataSize+len+512);
 		if (!newData) {
 			return FALSE;
 		}
@@ -178,7 +177,7 @@ BOOL FStringList_popBack(FStringList* me)
 	me->d->count -= 1;
 	//如果预留空间过多，则释放多余空间(伸缩余量为8个指针空间)
 	if ((me->d->count+8) < (me->d->strPtrsSize-32)) {
-		char **newPtrs = (char**)realloc(me->d->strPtrs, sizeof(char*)*(me->d->strPtrsSize-32));
+		char **newPtrs = F_RENEW(char*, me->d->strPtrs, sizeof(char*)*(me->d->strPtrsSize-32));
 		me->d->strPtrs = newPtrs;
 		me->d->strPtrsSize -= 32;
 	}
@@ -187,7 +186,7 @@ BOOL FStringList_popBack(FStringList* me)
 	me->d->usedDataSize -= len;
 	//同上(伸缩余量为512个字节)
 	if ((me->d->usedDataSize + 512) < (me->d->dataSize - 512)) {
-		char *newData = (char*)realloc(me->d->data, me->d->usedDataSize + 512);
+		char *newData = F_RENEW(char, me->d->data, me->d->usedDataSize + 512);
 		me->d->data = newData;
 		me->d->dataSize = me->d->usedDataSize + 512;
 	}

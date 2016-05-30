@@ -1,7 +1,7 @@
 #ifndef __FBMPWRITER_H__
 #define __FBMPWRITER_H__
 
-#include "includes.h"
+#include "FIncludes.h"
 #include "FImage.h"
 
 #ifdef __cplusplus

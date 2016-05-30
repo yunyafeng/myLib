@@ -9,6 +9,7 @@
 extern "C" {
 #endif
 
+/* 基本类型 */
 #define F32                                 float                       
 #define F64                                 double                      
 #define U8                                  unsigned char               
@@ -33,27 +34,57 @@ extern "C" {
 #define NULL								((void*)0)
 #endif
 #endif
-	
-#define F_LOG_LEVEL							4
-#define ENABLE_DEBUG						0
-#define ENABLE_ASSERT						0
 
+
+/* 调试相关宏定义,以及log级别 */	
+#define F_ENABLE_DEBUG						0
+#define F_ENABLE_ASSERT						0
+#define F_MEMORY_DEBUG						1
+
+#define F_LOG_LEVEL							4
 #define F_LOG_VERBO							0
 #define F_LOG_TRACE							1
 #define F_LOG_DEBUG							2
 #define F_LOG_INFO							3
 #define F_LOG_ERROR							4
 
+/* 内存管理调试 */
+#if (F_MEMORY_DEBUG)				
+static inline void* MemAlloc(U32 size) 
+{
+	void *res = malloc(size);
+	printf("malloc(%p, %d)\n", res, size);
+	return res;
+}
 
-#define F_DECLAR(_class, _name) 			_class _name; _class##_ctor(&_name)
-#define F_DDECLAR(_class, _name) 			_class##_dtor(&_name)
+static inline void MemFree(void* ptr) 
+{
+	printf("free(%p)\n", ptr);
+	free(ptr);
+}
 
-#define F_NEW(_class, _name) 				_class* _name = (_class*)malloc(sizeof(_class)); \
-											_class##_ctor(_name)
-#define F_DELETE(_class, _name) 			_class##_dtor(_name); free(_name)
+static inline void* MemRealloc(void* ptr, U32 size) 
+{
+	void *res = realloc(ptr, size);
+	printf("(%p)realloc(%p, %d)\n", ptr, res, size);
+	return res;
+}
+#else
+#define MemAlloc(_size) 		malloc(_size)
+#define MemRealloc(_ptr, _size) realloc(_ptr, _size)
+#define MemFree(_ptr)			free(_ptr)
+
+#endif
+
+/* memory-related */
+#define F_NEW(_type) 						(_type*)MemAlloc(sizeof(_type))
+#define F_NEWARR(_type, _size)				(_type*)MemAlloc(_size * sizeof(_type))
+#define F_RENEW(_type, _ptr, _size)			(_type*)MemRealloc(_ptr, _size)
+#define F_DELETE(_ptr) 						MemFree(_ptr)
 
 
-#if (ENABLE_DEBUG)
+/* log 输出 */
+#if (F_ENABLE_DEBUG)
 static const char f_strLog_message[][10] = {{"VERBOSE"}, {"TRACE"}, {"DEBUG"}, {"INFOR"}, {"ERROR"}};
 #define F_LOG(level, format, ...) \
 	do {\
@@ -67,7 +98,8 @@ static const char f_strLog_message[][10] = {{"VERBOSE"}, {"TRACE"}, {"DEBUG"}, {
 #define F_LOG(level, format, ...)
 #endif
 
-#if (ENABLE_ASSERT)
+/* 断言 */
+#if (F_ENABLE_ASSERT)
 #define F_ASSERT(_expression, _message) \
 	do {\
 		if (!(_expression)) {\
