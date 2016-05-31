@@ -100,15 +100,15 @@ static const char f_strLog_message[][10] = {{"VERBOSE"}, {"TRACE"}, {"DEBUG"}, {
 
 /* ╤оят */
 #if (F_ENABLE_ASSERT)
-#define F_ASSERT(_expression, _message) \
+#define F_ASSERT(_expression) \
 	do {\
 		if (!(_expression)) {\
-			F_LOG(F_LOG_ERROR, "F_ASSERT:(%s):%s\nExiting...\n", #_expression, _message);\
+			F_LOG(F_LOG_ERROR, "F_ASSERT:(%s)\nExiting...\n", #_expression);\
 			exit(1);\
 		}\
 	}while (0)
 #else
-#define F_ASSERT(_expression, _message)
+#define F_ASSERT(_expression)
 #endif
 
 #ifdef __cplusplus

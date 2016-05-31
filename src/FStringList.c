@@ -20,7 +20,7 @@ typedef struct f_string_list_private
 
 static void FStringListPrivate_ctor(FStringListPrivate* me)
 {
-	F_ASSERT(me, "");
+	F_ASSERT(me);
 	
 	me->count = 0;
 	me->strPtrsSize = 0;
@@ -32,7 +32,7 @@ static void FStringListPrivate_ctor(FStringListPrivate* me)
 
 static void FStringListPrivate_dtor(FStringListPrivate* me)
 {
-	F_ASSERT(me, "");
+	F_ASSERT(me);
 	
 	F_DELETE(me->strPtrs);
 	F_DELETE(me->data);
@@ -64,15 +64,21 @@ static U32 countChar(const char* str, const char* delim)
  */
 void FStringList_ctor(FStringList* me)
 {
-	F_ASSERT(me, "");
+	F_ASSERT(me);
 	
 	me->d = F_NEW(FStringListPrivate);
-	FStringListPrivate_ctor(me->d);
+	if (me->d) {
+		FStringListPrivate_ctor(me->d);
+	}
 }
 
 void FStringList_dtor(FStringList* me)
 {
-	F_ASSERT(me && me->d, "You must call the [FStringList_ctor] before use it");
+	F_ASSERT(me);
+	
+	if (!me->d) {
+		return;
+	}
 	
 	FStringListPrivate_dtor(me->d);
 	F_DELETE(me->d);
@@ -81,9 +87,9 @@ void FStringList_dtor(FStringList* me)
 
 BOOL FStringList_reserved(FStringList* me, U32 count,  U32 bytes)
 {
-	F_ASSERT(me && me->d, "You must call the [FStringList_ctor] before use it");
+	F_ASSERT(me);
 	//
-	if (me->d->strPtrs || me->d->data)
+	if (!me->d || me->d->strPtrs || me->d->data)
 		return FALSE;
 	
 	me->d->strPtrs = F_NEWARR(char*, count); //malloc(sizeof(char*) * count);
@@ -101,16 +107,19 @@ BOOL FStringList_reserved(FStringList* me, U32 count,  U32 bytes)
 
 U32 FStringList_count(FStringList *me)
 {
-	F_ASSERT(me && me->d, "You must call the [FStringList_ctor] before use it");
+	F_ASSERT(me);
 	
+	if (!me->d) {
+		return 0;
+	}	
 	return me->d->count;
 }
 
 char* FStringList_atIndex(FStringList *me, U32 index)
 {
-	F_ASSERT(me && me->d, "You must call the [FStringList_ctor] before use it");
+	F_ASSERT(me);
 	
-	if ((index >= me->d->count) || (NULL == me->d->strPtrs)) {
+	if (me->d || (index >= me->d->count) || (NULL == me->d->strPtrs)) {
 		return NULL;
 	}
 	return me->d->strPtrs[index];
@@ -118,7 +127,9 @@ char* FStringList_atIndex(FStringList *me, U32 index)
 
 void FStringList_output(FStringList* me, FILE *stream)
 {
-	if (me && me->d) {
+	F_ASSERT(me);
+
+	if (me->d) {
 		fprintf(stream, "StringList(%p):\n[\n", me);
 		U32 i = 0;
 		for (;i < me->d->count; ++i) {
@@ -133,7 +144,11 @@ void FStringList_output(FStringList* me, FILE *stream)
 
 BOOL FStringList_pushBack(FStringList* me, const char *string)
 {
-	F_ASSERT(me && me->d, "You must call the [FStringList_ctor] before use it");
+	F_ASSERT(me);
+	
+	if (!me->d) {
+		return FALSE;
+	}
 	
 	if (me->d->count > me->d->strPtrsSize)
 	{
@@ -167,9 +182,9 @@ BOOL FStringList_pushBack(FStringList* me, const char *string)
 
 BOOL FStringList_popBack(FStringList* me)
 {
-	F_ASSERT(me && me->d, "You must call the [FStringList_ctor] before use it");
+	F_ASSERT(me);
 	
-	if (me->d->count == 0) {
+	if (!me->d || me->d->count == 0) {
 		return FALSE;
 	}
 

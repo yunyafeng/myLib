@@ -20,18 +20,26 @@ static BOOL FPngLoader_load(FPngLoader* me, const char* imgFile);
  */ 
 static void FPngLoader_ctor(FPngLoader* me)
 {
+	F_ASSERT(me);
+
 	FImgLoader_ctor(&me->super, (FImageLoad)FPngLoader_load, 
 		            (FImgLoaderDtor)FPngLoader_dtor);
 }
 
 static void FPngLoader_dtor(FPngLoader* me)
 {
+	F_ASSERT(me);
+
 	FImgLoader_dtor(&me->super);
 }
 
 
 static BOOL FPngLoader_load(FPngLoader* me, const char* imgFile)
 {
+	F_ASSERT(me);
+
+	me->super.error = FIMGLOADER_UNSUPPORTFMT;
+	
 	return FALSE;
 }
 

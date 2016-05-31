@@ -40,7 +40,6 @@ static void FListPrivate_dtor(FListPrivate * me)
 
 static FListNode* FList_nodeOfIndex(FList* me, U32 index)
 {
-	//F_ASSERT(me && me->d);
 	FListNode *node;
 	U32 posi;
 	
@@ -68,8 +67,6 @@ static FListNode* FList_nodeOfIndex(FList* me, U32 index)
 
 static BOOL FList_removeNode(FList* me, FListNode* node)
 {
-	//F_ASSERT(me && me->d);
-	
 	if ((0 == me->d->count) || (node->owner != me->d))
 		return FALSE;
 
@@ -99,9 +96,7 @@ static BOOL FList_removeNode(FList* me, FListNode* node)
 }
 
 static BOOL FList_insertNode(FList* me, FListNode* beforeNode, FListNode* newNode)
-{
-	//F_ASSERT(me && me->d, "You must call the [FList_ctor] before use it");
-	
+{	
 	if (!beforeNode || !newNode)
 		return FALSE;
 	
@@ -134,39 +129,57 @@ static int FList_nodeCompare(const void* node1, const void*node2)
  */
 void FList_ctor(FList* me)
 {
+	F_ASSERT(me);
+
 	me->d = F_NEW(FListPrivate);
-	FListPrivate_ctor(me->d);
+	if (me->d) {
+		FListPrivate_ctor(me->d);
+	}
 }
 
 void FList_dtor(FList* me)
 {
+	F_ASSERT(me);
+
 	while (!FList_isEmpty(me)) {
 		FList_takeAtIndex(me, 0);
 	}
-	FListPrivate_dtor(me->d);
+	if (me->d) {
+		FListPrivate_dtor(me->d);
+	}
 	F_DELETE(me->d);
 	me->d = NULL;
 }
 
 BOOL FList_isEmpty(FList* me)
 {
-	F_ASSERT(me && me->d, "You must call the [FList_ctor] before use it");
+	F_ASSERT(me);
+	if (!me->d) {
+		return TRUE;
+	}
 	
 	return (me->d->count == 0) ? TRUE : FALSE;
 }
 
 U32 FList_count(FList* me)
 {
-	F_ASSERT(me && me->d, "You must call the [FList_ctor] before use it");
-	
+	F_ASSERT(me);
+	if (!me->d) {
+		return 0;
+	}
+		
 	return me->d->count;
 }
 
 
 BOOL FList_insertAtIndex(FList* me, U32 index, const void* data)
 {
-	F_ASSERT(me && me->d, "You must call the [FList_ctor] before use it");
-	
+	F_ASSERT(me);
+
+	if (!me->d) {
+		return FALSE;
+	}
+		
 	if (index > me->d->count) {
 		return FALSE;
 	}
@@ -210,8 +223,12 @@ BOOL FList_insertAtIndex(FList* me, U32 index, const void* data)
 
 void* FList_takeAtIndex(FList* me, U32 index)
 {
-	F_ASSERT(me && me->d, "You must call the [FList_ctor] before use it");
+	F_ASSERT(me);
 
+	if (!me->d) {
+		return NULL;
+	}
+		
 	FListNode* node = FList_nodeOfIndex(me, index);
 	if (node) {
 		void* result = node->data;
@@ -229,6 +246,12 @@ void* FList_takeAtIndex(FList* me, U32 index)
 
 void* FList_atIndex(FList* me, U32 index)
 {
+	F_ASSERT(me);
+
+	if (!me->d) {
+		return NULL;
+	}
+		
 	FListNode *node = FList_nodeOfIndex(me, index);
 	
 	return node ? node->data : NULL;
@@ -236,7 +259,11 @@ void* FList_atIndex(FList* me, U32 index)
 
 BOOL FList_insertBeforeIter(FList* me, FListIterator* iter, const void* data)
 {
-	F_ASSERT(me && me->d, "You must call the [FList_ctor] before use it");
+	F_ASSERT(me);
+	
+	if (!me->d) {
+		return FALSE;
+	}
 	
 	if (!FListIterator_isVaild(iter)) { 
 		return FALSE;
@@ -258,7 +285,11 @@ BOOL FList_insertBeforeIter(FList* me, FListIterator* iter, const void* data)
 
 void* FList_takeAtIter(FList* me, FListIterator* iter)
 {
-	F_ASSERT(me && me->d, "You must call the [FList_ctor] before use it");
+	F_ASSERT(me);
+	
+	if (!me->d) {
+		return NULL;
+	}
 	
 	if (FListIterator_isVaild(iter))
 	{
@@ -275,8 +306,13 @@ void* FList_takeAtIter(FList* me, FListIterator* iter)
 
 void* FList_atIter(FList* me, FListIterator* iter)
 {
-	if (FListIterator_isVaild(iter))
-	{
+	F_ASSERT(me);
+	
+	if (!me->d) {
+		return NULL;
+	}
+	
+	if (FListIterator_isVaild(iter)) {
 		FListNode *node = (FListNode*)(iter->p);
 		if (node->owner != me->d) {
 			return NULL;
@@ -290,14 +326,22 @@ void* FList_atIter(FList* me, FListIterator* iter)
 
 BOOL FList_pushBack(FList* me, const void* data)
 {
-	F_ASSERT(me && me->d, "You must call the [FList_ctor] before use it");
+	F_ASSERT(me);
+	
+	if (!me->d) {
+		return FALSE;
+	}
 	
 	return FList_insertAtIndex(me, me->d->count, data);
 }
 
 void* FList_popBack(FList* me)
 {
-	F_ASSERT(me && me->d, "You must call the [FList_ctor] before use it");
+	F_ASSERT(me);
+	
+	if (!me->d) {
+		return NULL;
+	}
 
 	if (0 == me->d->count) {
 		F_LOG(F_LOG_ERROR, "FList(%p) is empty\n", me);
@@ -317,6 +361,12 @@ void* FList_popBack(FList* me)
 
 void FList_clear(FList* me) 
 {
+	F_ASSERT(me);
+	
+	if (!me->d) {
+		return;
+	}
+	
 	while (!FList_isEmpty(me)) {
 		FList_takeAtIndex(me, 0);
 	}
@@ -324,21 +374,30 @@ void FList_clear(FList* me)
 
 FListIterator FList_begin(FList* me)
 {
-	F_ASSERT(me && me->d, "You must call the [FList_ctor] before use it");
+	F_ASSERT(me);
 	
 	FListIterator iter;
 	iter.i = 0;
-	iter.p = me->d->head;
-
+	if (me->d) {
+		iter.p = me->d->head;
+	}
+	else {
+		iter.p = NULL;
+	}
 	return iter;
 }
 
 FListIterator FList_end(FList* me)
 {
-	F_ASSERT(me && me->d, "You must call the [FList_ctor] before use it");
+	F_ASSERT(me);
 	
 	FListIterator iter;
-	iter.i = (int)me->d->count;
+	if (me->d) {
+		iter.i = (int)me->d->count;
+	}
+	else {
+		iter.i = 0;
+	}
 	iter.p = NULL;
 	
 	return iter;
@@ -347,7 +406,9 @@ FListIterator FList_end(FList* me)
 
 void FList_output(FList* me, FILE* stream)
 {
-	if (me && me->d) {
+	F_ASSERT(me);
+
+	if (me->d) {
 		FListNode *node;
 		U32 i;
 		
@@ -368,7 +429,9 @@ void FList_output(FList* me, FILE* stream)
 
 void FList_debug(FList* me)
 {
-	if (me && me->d) {
+	F_ASSERT(me);
+
+	if (me->d) {
 		fprintf(stdout, "FList(%p):\n[\n", me);
 		fprintf(stdout, "  FList.count = %d\n", me->d->count);
 		fprintf(stdout, "  FList.head = %p\n", me->d->head);
@@ -382,8 +445,12 @@ void FList_debug(FList* me)
 
 BOOL FList_quickSort(FList* me, FListCompare compare)
 {
-	F_ASSERT(me && me->d, "You must call the [FList_ctor] before use it");
+	F_ASSERT(me);
 
+	if (!me->d) {
+		return FALSE;
+	}
+	
 	if (0 == me->d->count) { 
 		F_LOG(F_LOG_ERROR, "FList(%p) is empty\n", me);
 		return FALSE;
@@ -431,7 +498,10 @@ BOOL FList_quickSort(FList* me, FListCompare compare)
 
 int FList_findForward(FList* me, const void* data, FListCompare compare)
 {
-	F_ASSERT(me && me->d, "You must call the [FList_ctor] before use it");
+	F_ASSERT(me);
+	if (!me->d) {
+		return -1;
+	}
 	
 	int find = -1;
 	int posi;
@@ -454,7 +524,10 @@ int FList_findForward(FList* me, const void* data, FListCompare compare)
 
 int FList_findBackward(FList* me, const void* data, FListCompare compare)
 {
-	F_ASSERT(me && me->d, "You must call the [FList_ctor] before use it");
+	F_ASSERT(me);
+	if (!me->d) {
+		return -1;
+	}
 	
 	int find = -1;
 	int posi;
@@ -477,11 +550,13 @@ int FList_findBackward(FList* me, const void* data, FListCompare compare)
 
 BOOL FListIterator_isVaild(FListIterator* me)
 {
+	F_ASSERT(me);
 	return me->p != NULL;
 }
 
 void* FListIterator_dataOf(FListIterator* me)
 {
+	F_ASSERT(me);
 	if (me->p) {
 		return ((FListNode*)(me->p))->data;
 	}
@@ -490,6 +565,7 @@ void* FListIterator_dataOf(FListIterator* me)
 
 void FListIterator_inc(FListIterator* me)
 {
+	F_ASSERT(me);
 	FListNode *node = (FListNode*)(me->p);
 	
 	me->i++;
@@ -505,6 +581,7 @@ void FListIterator_inc(FListIterator* me)
 
 void FListIterator_dec(FListIterator* me)
 {
+	F_ASSERT(me);
 	FListNode *node = (FListNode*)(me->p);
 	
 	me->i--;
@@ -520,6 +597,7 @@ void FListIterator_dec(FListIterator* me)
 
 void FListIterator_addSelf(FListIterator* me, U32 addend)
 {
+	F_ASSERT(me);
 	U32 i;
 	for (i = 0; i < addend; ++i) {
 		FListIterator_inc(me); 
@@ -528,6 +606,7 @@ void FListIterator_addSelf(FListIterator* me, U32 addend)
 
 void FListIterator_subSelf(FListIterator* me, U32 subtractor)
 {
+	F_ASSERT(me);
 	U32 i;
 	for (i = 0; i < subtractor; ++i) {
 		FListIterator_dec(me); 
@@ -536,21 +615,25 @@ void FListIterator_subSelf(FListIterator* me, U32 subtractor)
 
 BOOL FListIterator_lessThan(FListIterator* me, FListIterator* other)
 {
+	F_ASSERT(me);
 	return (me->i - other->i) < 0 ? TRUE : FALSE;
 }
 
 BOOL FListIterator_largeThan(FListIterator* me, FListIterator* other)
 {
+	F_ASSERT(me);
 	return (me->i - other->i) > 0 ? TRUE : FALSE;
 }
 
 BOOL FListIterator_equal(FListIterator* me, FListIterator* other)
 {
+	F_ASSERT(me);
 	return (me->i == other->i) && (me->p == other->p);
 }
 
 BOOL FListIterator_notEqual(FListIterator* me, FListIterator* other)
 {
+	F_ASSERT(me);
 	return (me->i != other->i) || (me->p != other->p);
 }
 

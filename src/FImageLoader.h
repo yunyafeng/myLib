@@ -8,6 +8,19 @@
 extern "C" {
 #endif
 
+typedef enum f_img_loader_error_code 
+{
+	FIMGLOADER_SUCCESS,				//成功
+	FIMGLOADER_IOERROR,				//文件IO错误 fopen fread fwrite...
+	FIMGLOADER_UNSUPPORTFMT,		//不支持的格式
+	FIMGLOADER_UNSUPPORTBMP,		//不支持的bmp文件
+	FIMGLOADER_UNSUPPORTJPG,		//不支持的jpeg文件
+	FIMGLOADER_UNSUPPORTPNG,		//不支持的png文件
+	FIMGLOADER_TOOLARGE,			//图像太大，内存不够用
+	FIMGLOADER_OUTOFMEMORY,			//内存不够
+	FIMGLOADER_UNKOWNERR,			//未知错误
+} FImgLoaderErrCode;
+
 struct f_img_loader;
 
 //定义load处理接口
@@ -18,9 +31,10 @@ typedef void (*FImgLoaderDtor)(struct f_img_loader*);
 
 //图像加载器定义
 typedef struct f_img_loader {
-	FImageLoad 		load;
-	FImgLoaderDtor 	dtor;
-	FImg*			image;
+	FImageLoad 			load;
+	FImgLoaderDtor 		dtor;
+	FImg*				image;
+	FImgLoaderErrCode 	error;
 } FImgLoader;
 
 /**
@@ -40,6 +54,11 @@ void FImgLoader_destroy(FImgLoader* me);
 //得到加载完成的图像数据
 FImg* FImgLoader_image(FImgLoader* me);
 
+//得到错误信息
+const char* FImgLoader_errorMessage(FImgLoader* me);
+
+//得到错误码
+FImgLoaderErrCode FImgLoader_errorCode(FImgLoader* me);
 
 #ifdef __cplusplus
 }

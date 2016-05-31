@@ -47,7 +47,6 @@ typedef struct f_image_private
 		((colorType*)((img)->d->data + (img)->d->lineSize * (y)) + (x))
 
 
-
 //临近插值法缩放图像
 static void FImg_ZoomNearestNeighbour(FImg *pDst, FImg *pSrc);
 //双线性插值法缩放图像
@@ -56,85 +55,119 @@ static void FImg_ZoomBilinear(FImg *pDst, FImg *pSrc);
 static void FImg_ZoomBicubic(FImg *pDst, FImg *pSrc);
 
 
-
+/*
+ * 此处牵扯到大内存分配，如果分配失败，构造的FImg无效
+ **/
 void FImg_ctor(FImg* me, U32 depth, U32 w, U32 h)
 {
-	U32 imgSize, totalBytes, lineSize;
+	F_ASSERT(me);
+
+	U32 imgSize, lineSize;
+	
+	if (w == 0 || h == 0 || depth == 0) {
+		me->d = NULL;
+		return;
+	}
 
 	lineSize = f_round_up(w * depth, 8) / 8;
-
 	imgSize = lineSize * h;
-	totalBytes = sizeof(FImgPrivate) + imgSize;
-	me->d = (FImgPrivate*)F_NEWARR(U8, totalBytes);
+	
+	me->d = (FImgPrivate*)F_NEWARR(U8, sizeof(FImgPrivate) + imgSize);
+	if (NULL == me->d) {
+		return;
+	}
+	
 	me->d->headerBytes = sizeof(FImgPrivate);
 	me->d->imgBytes = imgSize;
 	me->d->width = w;
 	me->d->height = h;
 	me->d->depth = depth;
 	me->d->lineSize = lineSize;
-	if (totalBytes > sizeof(FImgPrivate)) {
-		me->d->data = (U8*)(me->d) + sizeof(FImgPrivate);
-	}
-	else {
-		me->d->data = NULL;
-	}
+	me->d->data = (U8*)(me->d) + sizeof(FImgPrivate);
 }
 
 FImg FImg_copy(FImg* me)
 {
-	FImg copy;
-	FImg_ctor(&copy, me->d->depth, me->d->width, me->d->height);
-	if (me->d->data != NULL) {
+	F_ASSERT(me);
+
+	FImg copy = {NULL};
+	if (me->d) {
+		FImg_ctor(&copy, me->d->depth, me->d->width, me->d->height);
 		FImg_setData(&copy, me->d->data);
 	}
-
 	return copy;
 }
 
 void FImg_dtor(FImg* me)
 {
+	F_ASSERT(me);
+
 	F_DELETE(me->d);
 	me->d = NULL;
 }
 
 U32 FImg_width(FImg* me)
 {
-	F_ASSERT(me && me->d, "You must call the [FImg_ctor] before use it");
+	F_ASSERT(me);
+
+	if (!me->d) {
+		return 0;
+	}
 	return me->d->width;
 }
 
 U32 FImg_height(FImg* me)
 {
-	F_ASSERT(me && me->d, "You must call the [FImg_ctor] before use it");
+	F_ASSERT(me);
+
+	if (!me->d) {
+		return 0;
+	}
 	return me->d->height;
 }
 
 U32 FImg_depth(FImg* me)
 {
-	F_ASSERT(me && me->d, "You must call the [FImg_ctor] before use it");
+	F_ASSERT(me);
+
+	if (!me->d) {
+		return 0;
+	}
 	return me->d->depth;
 }
 
 U8* FImg_data(FImg* me)
 {
-	F_ASSERT(me && me->d, "You must call the [FImg_ctor] before use it");
+	F_ASSERT(me);
+
+	if (!me->d) {
+		return NULL;
+	}
 	return me->d->data;
 }
 
 void FImg_setData(FImg* me, U8* data)
 {
-	F_ASSERT(me && me->d, "You must call the [FImg_ctor] before use it");
+	F_ASSERT(me);
+
+	if (!me->d) {
+		return;
+	}
 	memcpy(me->d->data, data, me->d->imgBytes);
 }
 
 BOOL FImg_isValid(FImg* me)
 {
-	F_ASSERT(me && me->d, "You must call the [FImg_ctor] before use it");
-	return me->d->data != NULL;
+	F_ASSERT(me);
+	return me->d != NULL;
 }
 
 BOOL FImg_toRGB565(FImg* me)
 {
+	if (!me->d) {
+		return FALSE;
+	}
+	
 	if (me->d->depth == FIMG_RGB565)
 		return TRUE;
 	
@@ -195,6 +228,10 @@ BOOL FImg_toRGB565(FImg* me)
 
 BOOL FImg_toRGB888(FImg* me)
 {	
+	if (!me->d) {
+		return FALSE;
+	}
+	
 	if (me->d->depth == FIMG_RGB888)
 		return TRUE;
 	
@@ -254,6 +291,10 @@ BOOL FImg_toRGB888(FImg* me)
 
 BOOL FImg_toARGB8888(FImg* me)
 {
+	if (!me->d) {
+		return FALSE;
+	}
+	
 	if (me->d->depth == FIMG_ARGB8888)
 		return TRUE;
 	
@@ -316,7 +357,11 @@ BOOL FImg_toARGB8888(FImg* me)
 
 void FImg_output(FImg* me, FILE* stream)
 {
-	F_ASSERT(me && me->d, "You must call the [FImg_ctor] before use it");
+	F_ASSERT(me);
+	if (!me->d) {
+		return;
+	}
+	
 	fprintf(stream, "Image(%p):", me);
 	fprintf(stream, "[Size(%d, %d), Depth(%d)]\n", me->d->width, me->d->height, me->d->depth);
 }
@@ -324,7 +369,12 @@ void FImg_output(FImg* me, FILE* stream)
 //缩放图像
 void FImg_resize(FImg* me, F32 wScale, F32 hScale, U32 zoomHint)
 {
-	F_ASSERT(me && me->d, "You must call the [FImg_ctor] before use it");
+	F_ASSERT(me);
+
+	if (!me->d) {
+		return;
+	}
+	
 	if (me->d->data ==  NULL)
 		return;
 	U32 w = me->d->width * wScale;
