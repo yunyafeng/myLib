@@ -22,13 +22,10 @@ typedef enum f_img_loader_error_code
 	FIMGLOADER_UNKOWNERR,			//未知错误
 } FImgLoaderErrCode;
 
+struct f_img_loader;
 
 #define FImgLoaderStar_cast(_objPtr) 	((FImgLoader*)(_objPtr))
 #define FImgLoader_cast(_obj) 			((FImgLoader)(_obj))
-
-
-struct f_img_loader;
-
 
 /* 定义load处理接口 */
 typedef BOOL (*FImageLoad)(struct f_img_loader*, const char*);
