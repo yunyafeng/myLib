@@ -123,13 +123,17 @@ static int FList_nodeCompare(const void* node1, const void*node2)
 	return !compare(n1->data, n2->data);
 }
 
+static BOOL FList_defaultCompare(const void* d1, const void* d2)
+{
+	return d1 == d2;
+}
 
 /*
  * public:
  */
 void FList_ctor(FList* me)
 {
-	F_ASSERT(me);
+	F_REQUIRE(me);
 
 	me->d = F_NEW(FListPrivate);
 	if (me->d) {
@@ -139,7 +143,7 @@ void FList_ctor(FList* me)
 
 void FList_dtor(FList* me)
 {
-	F_ASSERT(me);
+	F_REQUIRE(me);
 
 	while (!FList_isEmpty(me)) {
 		FList_takeAtIndex(me, 0);
@@ -153,7 +157,7 @@ void FList_dtor(FList* me)
 
 BOOL FList_isEmpty(FList* me)
 {
-	F_ASSERT(me);
+	F_REQUIRE(me);
 	if (!me->d) {
 		return TRUE;
 	}
@@ -163,7 +167,7 @@ BOOL FList_isEmpty(FList* me)
 
 U32 FList_count(FList* me)
 {
-	F_ASSERT(me);
+	F_REQUIRE(me);
 	if (!me->d) {
 		return 0;
 	}
@@ -174,7 +178,7 @@ U32 FList_count(FList* me)
 
 BOOL FList_insertAtIndex(FList* me, U32 index, const void* data)
 {
-	F_ASSERT(me);
+	F_REQUIRE(me);
 
 	if (!me->d) {
 		return FALSE;
@@ -223,7 +227,7 @@ BOOL FList_insertAtIndex(FList* me, U32 index, const void* data)
 
 void* FList_takeAtIndex(FList* me, U32 index)
 {
-	F_ASSERT(me);
+	F_REQUIRE(me);
 
 	if (!me->d) {
 		return NULL;
@@ -246,7 +250,7 @@ void* FList_takeAtIndex(FList* me, U32 index)
 
 void* FList_atIndex(FList* me, U32 index)
 {
-	F_ASSERT(me);
+	F_REQUIRE(me);
 
 	if (!me->d) {
 		return NULL;
@@ -259,7 +263,7 @@ void* FList_atIndex(FList* me, U32 index)
 
 BOOL FList_insertBeforeIter(FList* me, FListIterator* iter, const void* data)
 {
-	F_ASSERT(me);
+	F_REQUIRE(me);
 	
 	if (!me->d) {
 		return FALSE;
@@ -285,7 +289,7 @@ BOOL FList_insertBeforeIter(FList* me, FListIterator* iter, const void* data)
 
 void* FList_takeAtIter(FList* me, FListIterator* iter)
 {
-	F_ASSERT(me);
+	F_REQUIRE(me);
 	
 	if (!me->d) {
 		return NULL;
@@ -306,7 +310,7 @@ void* FList_takeAtIter(FList* me, FListIterator* iter)
 
 void* FList_atIter(FList* me, FListIterator* iter)
 {
-	F_ASSERT(me);
+	F_REQUIRE(me);
 	
 	if (!me->d) {
 		return NULL;
@@ -326,7 +330,7 @@ void* FList_atIter(FList* me, FListIterator* iter)
 
 BOOL FList_pushBack(FList* me, const void* data)
 {
-	F_ASSERT(me);
+	F_REQUIRE(me);
 	
 	if (!me->d) {
 		return FALSE;
@@ -337,7 +341,7 @@ BOOL FList_pushBack(FList* me, const void* data)
 
 void* FList_popBack(FList* me)
 {
-	F_ASSERT(me);
+	F_REQUIRE(me);
 	
 	if (!me->d) {
 		return NULL;
@@ -361,7 +365,7 @@ void* FList_popBack(FList* me)
 
 void FList_clear(FList* me) 
 {
-	F_ASSERT(me);
+	F_REQUIRE(me);
 	
 	if (!me->d) {
 		return;
@@ -374,7 +378,7 @@ void FList_clear(FList* me)
 
 FListIterator FList_begin(FList* me)
 {
-	F_ASSERT(me);
+	F_REQUIRE(me);
 	
 	FListIterator iter;
 	iter.i = 0;
@@ -389,7 +393,7 @@ FListIterator FList_begin(FList* me)
 
 FListIterator FList_end(FList* me)
 {
-	F_ASSERT(me);
+	F_REQUIRE(me);
 	
 	FListIterator iter;
 	if (me->d) {
@@ -406,7 +410,7 @@ FListIterator FList_end(FList* me)
 
 void FList_output(FList* me, FILE* stream)
 {
-	F_ASSERT(me);
+	F_REQUIRE(me);
 
 	if (me->d) {
 		FListNode *node;
@@ -429,7 +433,7 @@ void FList_output(FList* me, FILE* stream)
 
 void FList_debug(FList* me)
 {
-	F_ASSERT(me);
+	F_REQUIRE(me);
 
 	if (me->d) {
 		fprintf(stdout, "FList(%p):\n[\n", me);
@@ -445,7 +449,7 @@ void FList_debug(FList* me)
 
 BOOL FList_quickSort(FList* me, FListCompare compare)
 {
-	F_ASSERT(me);
+	F_REQUIRE(me);
 
 	if (!me->d) {
 		return FALSE;
@@ -498,7 +502,7 @@ BOOL FList_quickSort(FList* me, FListCompare compare)
 
 int FList_findForward(FList* me, const void* data, FListCompare compare)
 {
-	F_ASSERT(me);
+	F_REQUIRE(me);
 	if (!me->d) {
 		return -1;
 	}
@@ -506,6 +510,10 @@ int FList_findForward(FList* me, const void* data, FListCompare compare)
 	int find = -1;
 	int posi;
 	FListNode *node;
+
+	if (!compare) {
+		compare = FList_defaultCompare;
+	}
 	
 	//由前向后遍历
 	for (
@@ -524,7 +532,7 @@ int FList_findForward(FList* me, const void* data, FListCompare compare)
 
 int FList_findBackward(FList* me, const void* data, FListCompare compare)
 {
-	F_ASSERT(me);
+	F_REQUIRE(me);
 	if (!me->d) {
 		return -1;
 	}
@@ -532,6 +540,10 @@ int FList_findBackward(FList* me, const void* data, FListCompare compare)
 	int find = -1;
 	int posi;
 	FListNode *node;
+	
+	if (!compare) {
+		compare = FList_defaultCompare;
+	}
 	
 	//由前向后遍历
 	for (
@@ -550,13 +562,13 @@ int FList_findBackward(FList* me, const void* data, FListCompare compare)
 
 BOOL FListIterator_isVaild(FListIterator* me)
 {
-	F_ASSERT(me);
+	F_REQUIRE(me);
 	return me->p != NULL;
 }
 
 void* FListIterator_dataOf(FListIterator* me)
 {
-	F_ASSERT(me);
+	F_REQUIRE(me);
 	if (me->p) {
 		return ((FListNode*)(me->p))->data;
 	}
@@ -565,7 +577,7 @@ void* FListIterator_dataOf(FListIterator* me)
 
 void FListIterator_inc(FListIterator* me)
 {
-	F_ASSERT(me);
+	F_REQUIRE(me);
 	FListNode *node = (FListNode*)(me->p);
 	
 	me->i++;
@@ -581,7 +593,7 @@ void FListIterator_inc(FListIterator* me)
 
 void FListIterator_dec(FListIterator* me)
 {
-	F_ASSERT(me);
+	F_REQUIRE(me);
 	FListNode *node = (FListNode*)(me->p);
 	
 	me->i--;
@@ -597,7 +609,7 @@ void FListIterator_dec(FListIterator* me)
 
 void FListIterator_addSelf(FListIterator* me, U32 addend)
 {
-	F_ASSERT(me);
+	F_REQUIRE(me);
 	U32 i;
 	for (i = 0; i < addend; ++i) {
 		FListIterator_inc(me); 
@@ -606,7 +618,7 @@ void FListIterator_addSelf(FListIterator* me, U32 addend)
 
 void FListIterator_subSelf(FListIterator* me, U32 subtractor)
 {
-	F_ASSERT(me);
+	F_REQUIRE(me);
 	U32 i;
 	for (i = 0; i < subtractor; ++i) {
 		FListIterator_dec(me); 
@@ -615,25 +627,25 @@ void FListIterator_subSelf(FListIterator* me, U32 subtractor)
 
 BOOL FListIterator_lessThan(FListIterator* me, FListIterator* other)
 {
-	F_ASSERT(me);
+	F_REQUIRE(me);
 	return (me->i - other->i) < 0 ? TRUE : FALSE;
 }
 
 BOOL FListIterator_largeThan(FListIterator* me, FListIterator* other)
 {
-	F_ASSERT(me);
+	F_REQUIRE(me);
 	return (me->i - other->i) > 0 ? TRUE : FALSE;
 }
 
 BOOL FListIterator_equal(FListIterator* me, FListIterator* other)
 {
-	F_ASSERT(me);
+	F_REQUIRE(me);
 	return (me->i == other->i) && (me->p == other->p);
 }
 
 BOOL FListIterator_notEqual(FListIterator* me, FListIterator* other)
 {
-	F_ASSERT(me);
+	F_REQUIRE(me);
 	return (me->i != other->i) || (me->p != other->p);
 }
 

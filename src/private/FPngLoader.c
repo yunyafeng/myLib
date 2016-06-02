@@ -20,7 +20,7 @@ static BOOL FPngLoader_load(FPngLoader* me, const char* imgFile);
  */ 
 static void FPngLoader_ctor(FPngLoader* me)
 {
-	F_ASSERT(me);
+	F_REQUIRE(me);
 
 	FImgLoader_ctor(&me->super, (FImageLoad)FPngLoader_load, 
 		            (FImgLoaderDtor)FPngLoader_dtor);
@@ -28,7 +28,7 @@ static void FPngLoader_ctor(FPngLoader* me)
 
 static void FPngLoader_dtor(FPngLoader* me)
 {
-	F_ASSERT(me);
+	F_REQUIRE(me);
 
 	FImgLoader_dtor(&me->super);
 }
@@ -36,7 +36,7 @@ static void FPngLoader_dtor(FPngLoader* me)
 
 static BOOL FPngLoader_load(FPngLoader* me, const char* imgFile)
 {
-	F_ASSERT(me);
+	F_REQUIRE(me);
 
 	me->super.error = FIMGLOADER_UNSUPPORTFMT;
 	
@@ -51,5 +51,5 @@ FImgLoader *FPngLoader_create()
 {
 	FPngLoader *pngLoader = F_NEW(FPngLoader);
 	FPngLoader_ctor(pngLoader);
-	return (FImgLoader*)pngLoader;
+	return  FImgLoaderStar_cast(pngLoader);
 }

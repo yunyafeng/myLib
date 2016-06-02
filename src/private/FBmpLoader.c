@@ -22,7 +22,7 @@ static BOOL FBmpLoader_load(FBmpLoader* me, const char* imgFile);
  */ 
 static void FBmpLoader_ctor(FBmpLoader* me)
 {
-	F_ASSERT(me);
+	F_REQUIRE(me);
 
 	FImgLoader_ctor(&me->super, (FImageLoad)FBmpLoader_load, 
 		            (FImgLoaderDtor)FBmpLoader_dtor);
@@ -30,7 +30,7 @@ static void FBmpLoader_ctor(FBmpLoader* me)
 
 static void FBmpLoader_dtor(FBmpLoader* me)
 {
-	F_ASSERT(me);
+	F_REQUIRE(me);
 
 	if (me->super.image) {
 		FImg_dtor(me->super.image);
@@ -41,7 +41,7 @@ static void FBmpLoader_dtor(FBmpLoader* me)
 
 static BOOL FBmpLoader_load(FBmpLoader* me, const char* imgFile)
 {
-	F_ASSERT(me);
+	F_REQUIRE(me);
 
 	BmpFh fh;
 	BmpIh ih;
@@ -153,6 +153,6 @@ FImgLoader *FBmpLoader_create()
 {
 	FBmpLoader *bmpLoader = F_NEW(FBmpLoader);
 	FBmpLoader_ctor(bmpLoader);
-	return (FImgLoader*)bmpLoader;
+	return FImgLoaderStar_cast(bmpLoader);
 }
  

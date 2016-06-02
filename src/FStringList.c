@@ -20,7 +20,7 @@ typedef struct f_string_list_private
 
 static void FStringListPrivate_ctor(FStringListPrivate* me)
 {
-	F_ASSERT(me);
+	F_REQUIRE(me);
 	
 	me->count = 0;
 	me->strPtrsSize = 0;
@@ -32,7 +32,7 @@ static void FStringListPrivate_ctor(FStringListPrivate* me)
 
 static void FStringListPrivate_dtor(FStringListPrivate* me)
 {
-	F_ASSERT(me);
+	F_REQUIRE(me);
 	
 	F_DELETE(me->strPtrs);
 	F_DELETE(me->data);
@@ -64,7 +64,7 @@ static U32 countChar(const char* str, const char* delim)
  */
 void FStringList_ctor(FStringList* me)
 {
-	F_ASSERT(me);
+	F_REQUIRE(me);
 	
 	me->d = F_NEW(FStringListPrivate);
 	if (me->d) {
@@ -74,7 +74,7 @@ void FStringList_ctor(FStringList* me)
 
 void FStringList_dtor(FStringList* me)
 {
-	F_ASSERT(me);
+	F_REQUIRE(me);
 	
 	if (!me->d) {
 		return;
@@ -87,7 +87,7 @@ void FStringList_dtor(FStringList* me)
 
 BOOL FStringList_reserved(FStringList* me, U32 count,  U32 bytes)
 {
-	F_ASSERT(me);
+	F_REQUIRE(me);
 	//
 	if (!me->d || me->d->strPtrs || me->d->data)
 		return FALSE;
@@ -107,7 +107,7 @@ BOOL FStringList_reserved(FStringList* me, U32 count,  U32 bytes)
 
 U32 FStringList_count(FStringList *me)
 {
-	F_ASSERT(me);
+	F_REQUIRE(me);
 	
 	if (!me->d) {
 		return 0;
@@ -117,7 +117,7 @@ U32 FStringList_count(FStringList *me)
 
 char* FStringList_atIndex(FStringList *me, U32 index)
 {
-	F_ASSERT(me);
+	F_REQUIRE(me);
 	
 	if (me->d || (index >= me->d->count) || (NULL == me->d->strPtrs)) {
 		return NULL;
@@ -127,7 +127,7 @@ char* FStringList_atIndex(FStringList *me, U32 index)
 
 void FStringList_output(FStringList* me, FILE *stream)
 {
-	F_ASSERT(me);
+	F_REQUIRE(me);
 
 	if (me->d) {
 		fprintf(stream, "StringList(%p):\n[\n", me);
@@ -144,7 +144,7 @@ void FStringList_output(FStringList* me, FILE *stream)
 
 BOOL FStringList_pushBack(FStringList* me, const char *string)
 {
-	F_ASSERT(me);
+	F_REQUIRE(me);
 	
 	if (!me->d) {
 		return FALSE;
@@ -182,7 +182,7 @@ BOOL FStringList_pushBack(FStringList* me, const char *string)
 
 BOOL FStringList_popBack(FStringList* me)
 {
-	F_ASSERT(me);
+	F_REQUIRE(me);
 	
 	if (!me->d || me->d->count == 0) {
 		return FALSE;

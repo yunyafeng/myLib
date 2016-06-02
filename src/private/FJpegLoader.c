@@ -22,7 +22,7 @@ static BOOL FJpegLoader_load(FJpegLoader* me, const char* imgFile);
  */ 
 static void FJpegLoader_ctor(FJpegLoader* me)
 {
-	F_ASSERT(me);
+	F_REQUIRE(me);
 
 	FImgLoader_ctor(&me->super, (FImageLoad)FJpegLoader_load, 
 		            (FImgLoaderDtor)FJpegLoader_dtor);
@@ -30,7 +30,7 @@ static void FJpegLoader_ctor(FJpegLoader* me)
 
 static void FJpegLoader_dtor(FJpegLoader* me)
 {
-	F_ASSERT(me);
+	F_REQUIRE(me);
 	
 	if (me->super.image) {
 		FImg_dtor(me->super.image);
@@ -44,7 +44,7 @@ static void FJpegLoader_dtor(FJpegLoader* me)
  */
 static BOOL FJpegLoader_load(FJpegLoader* me, const char* imgFile)
 {
-	F_ASSERT(me);
+	F_REQUIRE(me);
 
 	I32 err = 0;
 	FILE* inFile;
@@ -156,5 +156,5 @@ FImgLoader *FJpegLoader_create()
 {
 	FJpegLoader *jpegLoader = F_NEW(FJpegLoader);
 	FJpegLoader_ctor(jpegLoader);
-	return (FImgLoader*)jpegLoader;
+	return FImgLoaderStar_cast(jpegLoader);
 }

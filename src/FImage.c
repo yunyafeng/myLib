@@ -60,7 +60,7 @@ static void FImg_ZoomBicubic(FImg *pDst, FImg *pSrc);
  **/
 void FImg_ctor(FImg* me, U32 depth, U32 w, U32 h)
 {
-	F_ASSERT(me);
+	F_REQUIRE(me);
 
 	U32 imgSize, lineSize;
 	
@@ -88,7 +88,7 @@ void FImg_ctor(FImg* me, U32 depth, U32 w, U32 h)
 
 FImg FImg_copy(FImg* me)
 {
-	F_ASSERT(me);
+	F_REQUIRE(me);
 
 	FImg copy = {NULL};
 	if (me->d) {
@@ -100,7 +100,7 @@ FImg FImg_copy(FImg* me)
 
 void FImg_dtor(FImg* me)
 {
-	F_ASSERT(me);
+	F_REQUIRE(me);
 
 	F_DELETE(me->d);
 	me->d = NULL;
@@ -108,7 +108,7 @@ void FImg_dtor(FImg* me)
 
 U32 FImg_width(FImg* me)
 {
-	F_ASSERT(me);
+	F_REQUIRE(me);
 
 	if (!me->d) {
 		return 0;
@@ -118,7 +118,7 @@ U32 FImg_width(FImg* me)
 
 U32 FImg_height(FImg* me)
 {
-	F_ASSERT(me);
+	F_REQUIRE(me);
 
 	if (!me->d) {
 		return 0;
@@ -128,7 +128,7 @@ U32 FImg_height(FImg* me)
 
 U32 FImg_depth(FImg* me)
 {
-	F_ASSERT(me);
+	F_REQUIRE(me);
 
 	if (!me->d) {
 		return 0;
@@ -138,7 +138,7 @@ U32 FImg_depth(FImg* me)
 
 U8* FImg_data(FImg* me)
 {
-	F_ASSERT(me);
+	F_REQUIRE(me);
 
 	if (!me->d) {
 		return NULL;
@@ -148,7 +148,7 @@ U8* FImg_data(FImg* me)
 
 void FImg_setData(FImg* me, U8* data)
 {
-	F_ASSERT(me);
+	F_REQUIRE(me);
 
 	if (!me->d) {
 		return;
@@ -158,7 +158,7 @@ void FImg_setData(FImg* me, U8* data)
 
 BOOL FImg_isValid(FImg* me)
 {
-	F_ASSERT(me);
+	F_REQUIRE(me);
 	return me->d != NULL;
 }
 
@@ -357,19 +357,19 @@ BOOL FImg_toARGB8888(FImg* me)
 
 void FImg_output(FImg* me, FILE* stream)
 {
-	F_ASSERT(me);
+	F_REQUIRE(me);
 	if (!me->d) {
 		return;
 	}
 	
-	fprintf(stream, "Image(%p):", me);
-	fprintf(stream, "[Size(%d, %d), Depth(%d)]\n", me->d->width, me->d->height, me->d->depth);
+	fprintf(stream, "Image(%p):[Size(%d, %d), Depth(%d)]\n", me,
+	        me->d->width, me->d->height, me->d->depth);
 }
 
 //Ëõ·ÅÍ¼Ïñ
 void FImg_resize(FImg* me, F32 wScale, F32 hScale, U32 zoomHint)
 {
-	F_ASSERT(me);
+	F_REQUIRE(me);
 
 	if (!me->d) {
 		return;

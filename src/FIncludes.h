@@ -39,7 +39,7 @@ extern "C" {
 /* 调试相关宏定义,以及log级别 */	
 #define F_ENABLE_DEBUG						0
 #define F_ENABLE_ASSERT						0
-#define F_MEMORY_DEBUG						1
+#define F_MEMORY_DEBUG						0
 
 #define F_LOG_LEVEL							4
 #define F_LOG_VERBO							0
@@ -88,8 +88,7 @@ static inline void* MemRealloc(void* ptr, U32 size)
 static const char f_strLog_message[][10] = {{"VERBOSE"}, {"TRACE"}, {"DEBUG"}, {"INFOR"}, {"ERROR"}};
 #define F_LOG(level, format, ...) \
 	do {\
-    	if (level >= F_LOG_LEVEL)\
-    	{\
+    	if (level >= F_LOG_LEVEL) {\
 			fprintf(stderr, "[%s In function (%s)] " format, \
 				f_strLog_message[level], __func__, ##__VA_ARGS__); \
     	}\
@@ -106,10 +105,18 @@ static const char f_strLog_message[][10] = {{"VERBOSE"}, {"TRACE"}, {"DEBUG"}, {
 			F_LOG(F_LOG_ERROR, "F_ASSERT:(%s)\nExiting...\n", #_expression);\
 			exit(1);\
 		}\
-	}while (0)
+	} while (0)
 #else
 #define F_ASSERT(_expression)
 #endif
+
+/* 契约式设计(DbC)条件 */
+//检验前置条件
+#define F_REQUIRE(_expression)		F_ASSERT(_expression)
+//检验后置条件
+#define F_ENSURE(_expression)		F_ASSERT(_expression)
+//不变的条件
+#define F_INVARIANT(_expression)	F_ASSERT(_expression)
 
 #ifdef __cplusplus
 }
