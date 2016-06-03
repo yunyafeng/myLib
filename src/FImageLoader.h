@@ -28,15 +28,25 @@ struct f_img_loader;
 #define FImgLoader_cast(_obj) 			((FImgLoader)(_obj))
 
 /* 定义load处理接口 */
-typedef BOOL (*FImageLoad)(struct f_img_loader*, const char*);
+typedef BOOL (*FImageLoad)(struct f_img_loader* me, const char* imgFile);
 
 /* 析构函数 */
-typedef void (*FImgLoaderDtor)(struct f_img_loader*);
+typedef void (*FImgLoaderDtor)(struct f_img_loader* me);
+
 
 /* 图像加载器定义基础'类' */
 typedef struct f_img_loader {
-	FImageLoad 			load;		//加载函数
-	FImgLoaderDtor 		dtor;		//析构函数
+//virtual methd:
+	/**
+	 *	加载图像文件
+	 */
+	BOOL (*load)(struct f_img_loader* me, const char* imgFile);
+	/**
+	 *	析构加载器
+	 */
+	void (*dtor)(struct f_img_loader* me);
+
+//property:
 	FImg*				image;		//加载完成的图像数据
 	FImgLoaderErrCode 	error;		//错误码
 } FImgLoader;
